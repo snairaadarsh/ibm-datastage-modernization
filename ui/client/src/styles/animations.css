@@ -1,0 +1,196 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Animations — Keyframes & motion utilities
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Fade / Slide ──────────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Scale ─────────────────────────────────────────────────────────────────── */
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes popIn {
+  0%   { opacity: 0; transform: scale(0.7); }
+  70%  { transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* ── Glow / Pulse ──────────────────────────────────────────────────────────── */
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(59,130,246,0.2); }
+  50%       { box-shadow: 0 0 30px rgba(59,130,246,0.5), 0 0 60px rgba(59,130,246,0.2); }
+}
+
+@keyframes glowPulseGreen {
+  0%, 100% { box-shadow: 0 0 8px rgba(16,185,129,0.2); }
+  50%       { box-shadow: 0 0 24px rgba(16,185,129,0.5), 0 0 48px rgba(16,185,129,0.2); }
+}
+
+@keyframes glowPulseAmber {
+  0%, 100% { box-shadow: 0 0 8px rgba(245,158,11,0.2); }
+  50%       { box-shadow: 0 0 24px rgba(245,158,11,0.5), 0 0 48px rgba(245,158,11,0.2); }
+}
+
+/* ── Border flow ───────────────────────────────────────────────────────────── */
+@keyframes borderSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Data flow dash ────────────────────────────────────────────────────────── */
+@keyframes dashFlow {
+  to { stroke-dashoffset: -20; }
+}
+
+/* ── Progress bar indeterminate ────────────────────────────────────────────── */
+@keyframes progressPulse {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+/* ── Float ─────────────────────────────────────────────────────────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+/* ── Rotate ────────────────────────────────────────────────────────────────── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Typing cursor ─────────────────────────────────────────────────────────── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* ── Node active ring ──────────────────────────────────────────────────────── */
+@keyframes nodeRing {
+  0%   { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* ── Gradient drift ────────────────────────────────────────────────────────── */
+@keyframes gradientDrift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ── Counter ───────────────────────────────────────────────────────────────── */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─────────────── Utility Animation Classes ──────────────────────────────── */
+.anim-fade-in     { animation: fadeIn 0.4s var(--ease) both; }
+.anim-fade-in-up  { animation: fadeInUp 0.5s var(--ease-out) both; }
+.anim-scale-in    { animation: scaleIn 0.3s var(--ease-out) both; }
+.anim-pop-in      { animation: popIn 0.4s var(--spring) both; }
+.anim-spin        { animation: spin 1s linear infinite; }
+.anim-float       { animation: float 3s ease-in-out infinite; }
+.anim-glow        { animation: glowPulse 2s ease-in-out infinite; }
+.anim-glow-green  { animation: glowPulseGreen 2s ease-in-out infinite; }
+.anim-glow-amber  { animation: glowPulseAmber 2s ease-in-out infinite; }
+
+/* Stagger delay utilities */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+.delay-600 { animation-delay: 600ms; }
+.delay-700 { animation-delay: 700ms; }
+.delay-800 { animation-delay: 800ms; }
+
+/* ── Stage node states ─────────────────────────────────────────────────────── */
+.stage-node {
+  transition: all 0.35s var(--ease-out);
+}
+.stage-node.active  { animation: glowPulse 1.5s ease-in-out infinite; }
+.stage-node.done    { animation: glowPulseGreen 3s ease-in-out infinite; }
+.stage-node.error   { animation: glowPulseAmber 1.5s ease-in-out infinite; }
+
+/* ── Animated border (gradient ring) ──────────────────────────────────────── */
+.gradient-border {
+  position: relative;
+  border-radius: var(--radius-lg);
+}
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--primary), var(--accent), var(--purple));
+  background-size: 300% 300%;
+  animation: gradientDrift 3s ease infinite;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.gradient-border:hover::before { opacity: 1; }
+
+/* ── Particle canvas ───────────────────────────────────────────────────────── */
+.particle-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Pipeline connector line ───────────────────────────────────────────────── */
+.connector-line {
+  stroke-dasharray: 6 4;
+  animation: dashFlow 0.8s linear infinite;
+}
+
+/* ── Log scroll anchor ─────────────────────────────────────────────────────── */
+.log-anchor { height: 1px; }
+
+/* ── Drop zone active ──────────────────────────────────────────────────────── */
+@keyframes dropzonePulse {
+  0%, 100% { border-color: var(--primary); box-shadow: 0 0 0 0 var(--primary-glow); }
+  50%       { border-color: var(--accent);  box-shadow: 0 0 0 8px transparent; }
+}
+.dropzone-active { animation: dropzonePulse 1.5s ease infinite; }
+
+/* ── Hero number counter ───────────────────────────────────────────────────── */
+.stat-number {
+  display: inline-block;
+  animation: countUp 0.5s var(--spring) both;
+}
+
+/* ── Typing effect ─────────────────────────────────────────────────────────── */
+.typing-cursor::after {
+  content: '|';
+  animation: blink 0.7s step-end infinite;
+  color: var(--primary);
+}

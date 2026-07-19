@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE DSExport>
+<DSExport>
+  <Header CharacterEncoding="CP1252" ExportingTool="IBM DataStage" ExportingToolVersion="11.7" ServerName="DS-SERVER-01"/>
+  <Job Identifier="JOB_INVENTORY_RECONCILIATION" Description="Complex Inventory Reconciliation with SCD Type 2 and Lookup" Category="\\Jobs\\Supply Chain\\Weekly">
+    <Record Identifier="JOB_INVENTORY_RECONCILIATION" Description="Complex Inventory Reconciliation" Type="JOB_SEQUENCE">
+      <Property name="Annotation">Multi-source inventory reconciliation with SCD Type 2, complex lookups, sequential file processing, and exception routing</Property>
+    </Record>
+
+    <!-- Source 1: CSV Flat File -->
+    <Record Identifier="SEQ_FILE_WAREHOUSE_STOCK" Description="Warehouse Stock CSV File" Type="PxSequentialFile">
+      <Property name="StageType">PxSequentialFile</Property>
+      <Property name="InputPins">0</Property>
+      <Property name="OutputPins">1</Property>
+      <Property name="Annotation">Reads daily warehouse stock snapshot from flat file</Property>
+      <Collection name="Properties">
+        <SubRecord>
+          <Property name="Name">File</Property>
+          <Property name="Value">/data/warehouse/stock_snapshot_${DS_RUNDATE}.csv</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">Format</Property>
+          <Property name="Value">delimited</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">Delimiter</Property>
+          <Property name="Value">,</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">FirstLineIsHeader</Property>
+          <Property name="Value">true</Property>
+        </SubRecord>
+      </Collection>
+      <Collection name="OutputPin">
+        <SubRecord>
+          <Property name="Identifier">SEQ_FILE_OUT</Property>
+          <Collection name="Column">
+            <SubRecord><Property name="Name">ITEM_CODE</Property><Property name="SqlType">12</Property><Property name="Precision">20</Property></SubRecord>
+            <SubRecord><Property name="Name">WAREHOUSE_ID</Property><Property name="SqlType">12</Property><Property name="Precision">10</Property></SubRecord>
+            <SubRecord><Property name="Name">ON_HAND_QTY</Property><Property name="SqlType">4</Property><Property name="Precision">10</Property></SubRecord>
+            <SubRecord><Property name="Name">RESERVED_QTY</Property><Property name="SqlType">4</Property><Property name="Precision">10</Property></SubRecord>
+            <SubRecord><Property name="Name">UNIT_COST</Property><Property name="SqlType">8</Property><Property name="Precision">12</Property><Property name="Scale">4</Property></SubRecord>
+            <SubRecord><Property name="Name">LAST_UPDATED</Property><Property name="SqlType">93</Property><Property name="Precision">26</Property></SubRecord>
+          </Collection>
+        </SubRecord>
+      </Collection>
+    </Record>
+
+    <!-- Source 2: DB2 ERP System -->
+    <Record Identifier="DB2_SRC_ERP_INVENTORY" Description="ERP Inventory DB2 Source" Type="PxDB2Connector">
+      <Property name="StageType">PxDB2Connector</Property>
+      <Property name="InputPins">0</Property>
+      <Property name="OutputPins">1</Property>
+      <Property name="Annotation">Master inventory records from ERP DB2 database</Property>
+      <Collection name="Properties">
+        <SubRecord>
+          <Property name="Name">Connection.DataSource</Property>
+          <Property name="Value">ERP_DB2_PROD</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">XMLProperties.SelectStatement</Property>
+          <Property name="Value">SELECT ITEM_CODE, ITEM_DESC, CATEGORY, SUPPLIER_ID, REORDER_LEVEL, LEAD_TIME_DAYS, IS_ACTIVE, EFF_START_DATE, EFF_END_DATE FROM ERP.ITEM_MASTER WHERE IS_ACTIVE = 'Y'</Property>
+        </SubRecord>
+      </Collection>
+      <Collection name="OutputPin">
+        <SubRecord>
+          <Property name="Identifier">DB2_SRC_OUT</Property>
+          <Collection name="Column">
+            <SubRecord><Property name="Name">ITEM_CODE</Property><Property name="SqlType">12</Property><Property name="Precision">20</Property></SubRecord>
+            <SubRecord><Property name="Name">ITEM_DESC</Property><Property name="SqlType">12</Property><Property name="Precision">200</Property></SubRecord>
+            <SubRecord><Property name="Name">CATEGORY</Property><Property name="SqlType">12</Property><Property name="Precision">50</Property></SubRecord>
+            <SubRecord><Property name="Name">SUPPLIER_ID</Property><Property name="SqlType">12</Property><Property name="Precision">15</Property></SubRecord>
+            <SubRecord><Property name="Name">REORDER_LEVEL</Property><Property name="SqlType">4</Property><Property name="Precision">10</Property></SubRecord>
+            <SubRecord><Property name="Name">LEAD_TIME_DAYS</Property><Property name="SqlType">4</Property><Property name="Precision">5</Property></SubRecord>
+            <SubRecord><Property name="Name">IS_ACTIVE</Property><Property name="SqlType">12</Property><Property name="Precision">1</Property></SubRecord>
+            <SubRecord><Property name="Name">EFF_START_DATE</Property><Property name="SqlType">93</Property><Property name="Precision">26</Property></SubRecord>
+            <SubRecord><Property name="Name">EFF_END_DATE</Property><Property name="SqlType">93</Property><Property name="Precision">26</Property></SubRecord>
+          </Collection>
+        </SubRecord>
+      </Collection>
+    </Record>
+
+    <!-- Lookup Stage -->
+    <Record Identifier="LOOKUP_SUPPLIER_INFO" Description="Supplier Information Lookup" Type="PxLookup">
+      <Property name="StageType">PxLookup</Property>
+      <Property name="InputPins">2</Property>
+      <Property name="OutputPins">1</Property>
+      <Property name="Annotation">Lookup supplier details from reference table</Property>
+      <Collection name="Properties">
+        <SubRecord>
+          <Property name="Name">LookupKey</Property>
+          <Property name="Value">SUPPLIER_ID</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">LookupType</Property>
+          <Property name="Value">Normal</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">NoMatchHandling</Property>
+          <Property name="Value">Continue</Property>
+        </SubRecord>
+      </Collection>
+    </Record>
+
+    <!-- Join: Warehouse + ERP -->
+    <Record Identifier="JOIN_WAREHOUSE_ERP" Description="Join Warehouse Stock with ERP Master" Type="PxJoin">
+      <Property name="StageType">PxJoin</Property>
+      <Property name="InputPins">2</Property>
+      <Property name="OutputPins">2</Property>
+      <Property name="Annotation">Left outer join to identify items in warehouse not in ERP (exceptions)</Property>
+      <Collection name="Properties">
+        <SubRecord>
+          <Property name="Name">JoinType</Property>
+          <Property name="Value">LeftOuter</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">JoinKey</Property>
+          <Property name="Value">ITEM_CODE</Property>
+        </SubRecord>
+      </Collection>
+    </Record>
+
+    <!-- Complex Transformer with SCD Type 2 logic -->
+    <Record Identifier="TRANSFORM_SCD2_INVENTORY" Description="SCD Type 2 Inventory Transform" Type="PxTransformer">
+      <Property name="StageType">PxTransformer</Property>
+      <Property name="InputPins">1</Property>
+      <Property name="OutputPins">2</Property>
+      <Property name="Annotation">Apply SCD Type 2 logic: detect changes and route to insert or update paths</Property>
+      <Collection name="Transformations">
+        <SubRecord>
+          <Property name="Name">AVAILABLE_QTY</Property>
+          <Property name="Expression">ON_HAND_QTY - RESERVED_QTY</Property>
+          <Property name="OutputCol">AVAILABLE_QTY</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">INVENTORY_VALUE</Property>
+          <Property name="Expression">ON_HAND_QTY * UNIT_COST</Property>
+          <Property name="OutputCol">INVENTORY_VALUE</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">STOCK_STATUS</Property>
+          <Property name="Expression">If AVAILABLE_QTY = 0 Then "OUT_OF_STOCK" Else If AVAILABLE_QTY &lt; REORDER_LEVEL Then "LOW_STOCK" Else "IN_STOCK"</Property>
+          <Property name="OutputCol">STOCK_STATUS</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">REORDER_REQUIRED</Property>
+          <Property name="Expression">If AVAILABLE_QTY &lt; REORDER_LEVEL Then 1 Else 0</Property>
+          <Property name="OutputCol">REORDER_REQUIRED</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">DAYS_UNTIL_REORDER</Property>
+          <Property name="Expression">If REORDER_REQUIRED = 1 Then LEAD_TIME_DAYS Else -1</Property>
+          <Property name="OutputCol">DAYS_UNTIL_REORDER</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">RECORD_HASH</Property>
+          <Property name="Expression">Checksum(ITEM_CODE : WAREHOUSE_ID : Char(ON_HAND_QTY) : Char(UNIT_COST))</Property>
+          <Property name="OutputCol">RECORD_HASH</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">SCD_EFF_DATE</Property>
+          <Property name="Expression">CurrentDate()</Property>
+          <Property name="OutputCol">SCD_EFF_START_DATE</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">SCD_END_DATE</Property>
+          <Property name="Expression">DateFromComponents(9999, 12, 31)</Property>
+          <Property name="OutputCol">SCD_EFF_END_DATE</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">IS_CURRENT</Property>
+          <Property name="Expression">1</Property>
+          <Property name="OutputCol">IS_CURRENT_FLAG</Property>
+        </SubRecord>
+      </Collection>
+    </Record>
+
+    <!-- Exception handling stage -->
+    <Record Identifier="EXCEPTION_UNMATCHED" Description="Unmatched Items Exception Handler" Type="PxPeekStage">
+      <Property name="StageType">PxPeekStage</Property>
+      <Property name="InputPins">1</Property>
+      <Property name="OutputPins">1</Property>
+      <Property name="Annotation">Log unmatched warehouse items for reconciliation report</Property>
+    </Record>
+
+    <!-- Sort before target load -->
+    <Record Identifier="SORT_BY_ITEM" Description="Sort by Item Code" Type="PxSortStage">
+      <Property name="StageType">PxSortStage</Property>
+      <Property name="InputPins">1</Property>
+      <Property name="OutputPins">1</Property>
+      <Collection name="Properties">
+        <SubRecord>
+          <Property name="Name">SortKeys</Property>
+          <Property name="Value">ITEM_CODE ASC, WAREHOUSE_ID ASC</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">Stable</Property>
+          <Property name="Value">true</Property>
+        </SubRecord>
+      </Collection>
+    </Record>
+
+    <!-- Target: BigQuery Inventory Dimension Table -->
+    <Record Identifier="BQ_TGT_INVENTORY_DIM" Description="BigQuery Inventory Dimension Target" Type="PxBigQueryConnector">
+      <Property name="StageType">PxBigQueryConnector</Property>
+      <Property name="InputPins">1</Property>
+      <Property name="OutputPins">0</Property>
+      <Property name="Annotation">SCD Type 2 dimension table in BigQuery</Property>
+      <Collection name="Properties">
+        <SubRecord>
+          <Property name="Name">Connection.ProjectId</Property>
+          <Property name="Value">acme-analytics-prod</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">Connection.Dataset</Property>
+          <Property name="Value">supply_chain</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">XMLProperties.TableName</Property>
+          <Property name="Value">inventory_dimension</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">XMLProperties.WriteMode</Property>
+          <Property name="Value">MERGE</Property>
+        </SubRecord>
+      </Collection>
+    </Record>
+
+    <!-- Target: Exception CSV -->
+    <Record Identifier="SEQ_FILE_EXCEPTIONS" Description="Exception Records Output" Type="PxSequentialFile">
+      <Property name="StageType">PxSequentialFile</Property>
+      <Property name="InputPins">1</Property>
+      <Property name="OutputPins">0</Property>
+      <Collection name="Properties">
+        <SubRecord>
+          <Property name="Name">File</Property>
+          <Property name="Value">/data/exceptions/inventory_exceptions_${DS_RUNDATE}.csv</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">Format</Property>
+          <Property name="Value">delimited</Property>
+        </SubRecord>
+      </Collection>
+    </Record>
+
+    <!-- ===================== LINKS ===================== -->
+    <Record Identifier="LINK_01" Type="DSLink">
+      <Property name="FromStage">SEQ_FILE_WAREHOUSE_STOCK</Property>
+      <Property name="ToStage">JOIN_WAREHOUSE_ERP</Property>
+      <Property name="FromPin">0</Property><Property name="ToPin">0</Property>
+    </Record>
+    <Record Identifier="LINK_02" Type="DSLink">
+      <Property name="FromStage">DB2_SRC_ERP_INVENTORY</Property>
+      <Property name="ToStage">LOOKUP_SUPPLIER_INFO</Property>
+      <Property name="FromPin">0</Property><Property name="ToPin">0</Property>
+    </Record>
+    <Record Identifier="LINK_03" Type="DSLink">
+      <Property name="FromStage">LOOKUP_SUPPLIER_INFO</Property>
+      <Property name="ToStage">JOIN_WAREHOUSE_ERP</Property>
+      <Property name="FromPin">0</Property><Property name="ToPin">1</Property>
+    </Record>
+    <Record Identifier="LINK_04" Type="DSLink">
+      <Property name="FromStage">JOIN_WAREHOUSE_ERP</Property>
+      <Property name="ToStage">TRANSFORM_SCD2_INVENTORY</Property>
+      <Property name="FromPin">0</Property><Property name="ToPin">0</Property>
+    </Record>
+    <Record Identifier="LINK_05" Type="DSLink">
+      <Property name="FromStage">JOIN_WAREHOUSE_ERP</Property>
+      <Property name="ToStage">EXCEPTION_UNMATCHED</Property>
+      <Property name="FromPin">1</Property><Property name="ToPin">0</Property>
+    </Record>
+    <Record Identifier="LINK_06" Type="DSLink">
+      <Property name="FromStage">TRANSFORM_SCD2_INVENTORY</Property>
+      <Property name="ToStage">SORT_BY_ITEM</Property>
+      <Property name="FromPin">0</Property><Property name="ToPin">0</Property>
+    </Record>
+    <Record Identifier="LINK_07" Type="DSLink">
+      <Property name="FromStage">SORT_BY_ITEM</Property>
+      <Property name="ToStage">BQ_TGT_INVENTORY_DIM</Property>
+      <Property name="FromPin">0</Property><Property name="ToPin">0</Property>
+    </Record>
+    <Record Identifier="LINK_08" Type="DSLink">
+      <Property name="FromStage">EXCEPTION_UNMATCHED</Property>
+      <Property name="ToStage">SEQ_FILE_EXCEPTIONS</Property>
+      <Property name="FromPin">0</Property><Property name="ToPin">0</Property>
+    </Record>
+
+  </Job>
+</DSExport>

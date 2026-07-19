@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE DSExport>
+<DSExport>
+  <Header CharacterEncoding="CP1252" ExportingTool="IBM DataStage" ExportingToolVersion="11.7" ServerName="DS-SERVER-01"/>
+  <Job Identifier="JOB_CUSTOMER_SALES_ETL" Description="Customer Sales Daily ETL Job" Category="\\Jobs\\Finance\\Daily">
+    <Record Identifier="JOB_CUSTOMER_SALES_ETL" Description="Customer Sales Daily ETL Job" Type="JOB_SEQUENCE">
+      <Property name="JobType">1</Property>
+      <Property name="ControlAfterSubJobFailure">1</Property>
+      <Property name="Annotation">Loads customer sales data from Oracle source to BigQuery target with filtering and aggregation</Property>
+    </Record>
+
+    <!-- ===================== STAGES ===================== -->
+
+    <!-- Stage 1: Oracle Source Connector -->
+    <Record Identifier="ORACLE_SRC_CUSTOMERS" Description="Oracle Customers Source" Type="PxSequentialFile">
+      <Property name="StageType">PxOracleConnector</Property>
+      <Property name="InputPins">0</Property>
+      <Property name="OutputPins">1</Property>
+      <Property name="Annotation">Reads customer data from Oracle CUSTOMERS table</Property>
+      <Collection name="Properties">
+        <SubRecord>
+          <Property name="Name">Connection.DataSource</Property>
+          <Property name="Value">ORACLE_PROD_DB</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">Connection.Username</Property>
+          <Property name="Value">etl_user</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">Connection.Password</Property>
+          <Property name="Value">encrypted:AES256:xK9mP2qL</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">XMLProperties.SelectStatement</Property>
+          <Property name="Value">SELECT CUST_ID, CUST_NAME, REGION, SEGMENT, CREATED_DATE FROM CUSTOMERS WHERE STATUS = 'ACTIVE'</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">XMLProperties.TableName</Property>
+          <Property name="Value">CUSTOMERS</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">XMLProperties.Schema</Property>
+          <Property name="Value">SALES_SCHEMA</Property>
+        </SubRecord>
+      </Collection>
+      <Collection name="OutputPin">
+        <SubRecord>
+          <Property name="Identifier">ORACLE_SRC_CUSTOMERS_OUTPUT</Property>
+          <Collection name="Column">
+            <SubRecord>
+              <Property name="Name">CUST_ID</Property>
+              <Property name="SqlType">4</Property>
+              <Property name="Precision">10</Property>
+              <Property name="Scale">0</Property>
+              <Property name="Nullable">0</Property>
+            </SubRecord>
+            <SubRecord>
+              <Property name="Name">CUST_NAME</Property>
+              <Property name="SqlType">12</Property>
+              <Property name="Precision">100</Property>
+              <Property name="Nullable">1</Property>
+            </SubRecord>
+            <SubRecord>
+              <Property name="Name">REGION</Property>
+              <Property name="SqlType">12</Property>
+              <Property name="Precision">50</Property>
+              <Property name="Nullable">1</Property>
+            </SubRecord>
+            <SubRecord>
+              <Property name="Name">SEGMENT</Property>
+              <Property name="SqlType">12</Property>
+              <Property name="Precision">30</Property>
+              <Property name="Nullable">1</Property>
+            </SubRecord>
+            <SubRecord>
+              <Property name="Name">CREATED_DATE</Property>
+              <Property name="SqlType">93</Property>
+              <Property name="Precision">26</Property>
+              <Property name="Nullable">1</Property>
+            </SubRecord>
+          </Collection>
+        </SubRecord>
+      </Collection>
+    </Record>
+
+    <!-- Stage 2: Sales Fact Source -->
+    <Record Identifier="ORACLE_SRC_SALES" Description="Oracle Sales Fact Source" Type="PxSequentialFile">
+      <Property name="StageType">PxOracleConnector</Property>
+      <Property name="InputPins">0</Property>
+      <Property name="OutputPins">1</Property>
+      <Property name="Annotation">Reads daily sales transactions from SALES_FACT table</Property>
+      <Collection name="Properties">
+        <SubRecord>
+          <Property name="Name">Connection.DataSource</Property>
+          <Property name="Value">ORACLE_PROD_DB</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">XMLProperties.SelectStatement</Property>
+          <Property name="Value">SELECT SALE_ID, CUST_ID, PRODUCT_ID, SALE_DATE, AMOUNT, QUANTITY, DISCOUNT_PCT FROM SALES_FACT WHERE SALE_DATE = TRUNC(SYSDATE - 1)</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">XMLProperties.TableName</Property>
+          <Property name="Value">SALES_FACT</Property>
+        </SubRecord>
+      </Collection>
+      <Collection name="OutputPin">
+        <SubRecord>
+          <Property name="Identifier">ORACLE_SRC_SALES_OUTPUT</Property>
+          <Collection name="Column">
+            <SubRecord>
+              <Property name="Name">SALE_ID</Property>
+              <Property name="SqlType">4</Property>
+              <Property name="Precision">15</Property>
+            </SubRecord>
+            <SubRecord>
+              <Property name="Name">CUST_ID</Property>
+              <Property name="SqlType">4</Property>
+              <Property name="Precision">10</Property>
+            </SubRecord>
+            <SubRecord>
+              <Property name="Name">PRODUCT_ID</Property>
+              <Property name="SqlType">4</Property>
+              <Property name="Precision">10</Property>
+            </SubRecord>
+            <SubRecord>
+              <Property name="Name">SALE_DATE</Property>
+              <Property name="SqlType">93</Property>
+              <Property name="Precision">26</Property>
+            </SubRecord>
+            <SubRecord>
+              <Property name="Name">AMOUNT</Property>
+              <Property name="SqlType">8</Property>
+              <Property name="Precision">18</Property>
+              <Property name="Scale">2</Property>
+            </SubRecord>
+            <SubRecord>
+              <Property name="Name">QUANTITY</Property>
+              <Property name="SqlType">4</Property>
+              <Property name="Precision">10</Property>
+            </SubRecord>
+            <SubRecord>
+              <Property name="Name">DISCOUNT_PCT</Property>
+              <Property name="SqlType">8</Property>
+              <Property name="Precision">5</Property>
+              <Property name="Scale">2</Property>
+            </SubRecord>
+          </Collection>
+        </SubRecord>
+      </Collection>
+    </Record>
+
+    <!-- Stage 3: Join Stage -->
+    <Record Identifier="JOIN_CUST_SALES" Description="Join Customer and Sales" Type="PxJoin">
+      <Property name="StageType">PxJoin</Property>
+      <Property name="InputPins">2</Property>
+      <Property name="OutputPins">1</Property>
+      <Property name="Annotation">Inner join customers with sales on CUST_ID</Property>
+      <Collection name="Properties">
+        <SubRecord>
+          <Property name="Name">JoinType</Property>
+          <Property name="Value">Inner</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">JoinKey</Property>
+          <Property name="Value">CUST_ID</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">SortInput</Property>
+          <Property name="Value">false</Property>
+        </SubRecord>
+      </Collection>
+    </Record>
+
+    <!-- Stage 4: Transformer Stage -->
+    <Record Identifier="TRANSFORM_SALES_METRICS" Description="Calculate Sales Metrics" Type="PxTransformer">
+      <Property name="StageType">PxTransformer</Property>
+      <Property name="InputPins">1</Property>
+      <Property name="OutputPins">1</Property>
+      <Property name="Annotation">Apply business rules: net amount, tier classification, date formatting</Property>
+      <Collection name="Transformations">
+        <SubRecord>
+          <Property name="Name">NET_AMOUNT</Property>
+          <Property name="Expression">AMOUNT * (1 - DISCOUNT_PCT / 100)</Property>
+          <Property name="OutputCol">NET_AMOUNT</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">CUSTOMER_TIER</Property>
+          <Property name="Expression">If NET_AMOUNT > 10000 Then "GOLD" Else If NET_AMOUNT > 5000 Then "SILVER" Else "BRONZE"</Property>
+          <Property name="OutputCol">CUSTOMER_TIER</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">SALE_YEAR</Property>
+          <Property name="Expression">Year(SALE_DATE)</Property>
+          <Property name="OutputCol">SALE_YEAR</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">SALE_MONTH</Property>
+          <Property name="Expression">Month(SALE_DATE)</Property>
+          <Property name="OutputCol">SALE_MONTH</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">FULL_NAME_UPPER</Property>
+          <Property name="Expression">Upcase(Trim(CUST_NAME))</Property>
+          <Property name="OutputCol">CUST_NAME_CLEAN</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">IS_BULK_ORDER</Property>
+          <Property name="Expression">If QUANTITY >= 100 Then 1 Else 0</Property>
+          <Property name="OutputCol">IS_BULK_ORDER</Property>
+        </SubRecord>
+      </Collection>
+    </Record>
+
+    <!-- Stage 5: Filter/Select Stage -->
+    <Record Identifier="FILTER_VALID_SALES" Description="Filter Valid Sales Only" Type="PxFilter">
+      <Property name="StageType">PxFilter</Property>
+      <Property name="InputPins">1</Property>
+      <Property name="OutputPins">1</Property>
+      <Property name="Annotation">Remove records with null or negative amounts</Property>
+      <Collection name="Properties">
+        <SubRecord>
+          <Property name="Name">FilterCondition</Property>
+          <Property name="Value">NET_AMOUNT > 0 AND CUST_ID IS NOT NULL AND SALE_DATE IS NOT NULL</Property>
+        </SubRecord>
+      </Collection>
+    </Record>
+
+    <!-- Stage 6: Aggregator Stage -->
+    <Record Identifier="AGG_DAILY_SUMMARY" Description="Daily Sales Aggregation" Type="PxAggregate">
+      <Property name="StageType">PxAggregate</Property>
+      <Property name="InputPins">1</Property>
+      <Property name="OutputPins">1</Property>
+      <Property name="Annotation">Aggregate daily totals by region and segment</Property>
+      <Collection name="Properties">
+        <SubRecord>
+          <Property name="Name">GroupByKeys</Property>
+          <Property name="Value">REGION,SEGMENT,SALE_YEAR,SALE_MONTH</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">Aggregations</Property>
+          <Property name="Value">SUM(NET_AMOUNT) AS TOTAL_REVENUE,COUNT(SALE_ID) AS TOTAL_ORDERS,AVG(NET_AMOUNT) AS AVG_ORDER_VALUE,MAX(NET_AMOUNT) AS MAX_ORDER_VALUE</Property>
+        </SubRecord>
+      </Collection>
+    </Record>
+
+    <!-- Stage 7: BigQuery Target -->
+    <Record Identifier="BQ_TGT_SALES_SUMMARY" Description="BigQuery Sales Summary Target" Type="PxBigQueryConnector">
+      <Property name="StageType">PxBigQueryConnector</Property>
+      <Property name="InputPins">1</Property>
+      <Property name="OutputPins">0</Property>
+      <Property name="Annotation">Write aggregated results to BigQuery sales_summary table</Property>
+      <Collection name="Properties">
+        <SubRecord>
+          <Property name="Name">Connection.ProjectId</Property>
+          <Property name="Value">acme-analytics-prod</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">Connection.Dataset</Property>
+          <Property name="Value">finance_reporting</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">XMLProperties.TableName</Property>
+          <Property name="Value">daily_sales_summary</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">XMLProperties.WriteMode</Property>
+          <Property name="Value">APPEND</Property>
+        </SubRecord>
+        <SubRecord>
+          <Property name="Name">XMLProperties.CreateTableIfNotExists</Property>
+          <Property name="Value">true</Property>
+        </SubRecord>
+      </Collection>
+    </Record>
+
+    <!-- ===================== LINKS ===================== -->
+    <Record Identifier="LINK_01" Type="DSLink">
+      <Property name="FromStage">ORACLE_SRC_CUSTOMERS</Property>
+      <Property name="ToStage">JOIN_CUST_SALES</Property>
+      <Property name="FromPin">0</Property>
+      <Property name="ToPin">0</Property>
+    </Record>
+    <Record Identifier="LINK_02" Type="DSLink">
+      <Property name="FromStage">ORACLE_SRC_SALES</Property>
+      <Property name="ToStage">JOIN_CUST_SALES</Property>
+      <Property name="FromPin">0</Property>
+      <Property name="ToPin">1</Property>
+    </Record>
+    <Record Identifier="LINK_03" Type="DSLink">
+      <Property name="FromStage">JOIN_CUST_SALES</Property>
+      <Property name="ToStage">TRANSFORM_SALES_METRICS</Property>
+      <Property name="FromPin">0</Property>
+      <Property name="ToPin">0</Property>
+    </Record>
+    <Record Identifier="LINK_04" Type="DSLink">
+      <Property name="FromStage">TRANSFORM_SALES_METRICS</Property>
+      <Property name="ToStage">FILTER_VALID_SALES</Property>
+      <Property name="FromPin">0</Property>
+      <Property name="ToPin">0</Property>
+    </Record>
+    <Record Identifier="LINK_05" Type="DSLink">
+      <Property name="FromStage">FILTER_VALID_SALES</Property>
+      <Property name="ToStage">AGG_DAILY_SUMMARY</Property>
+      <Property name="FromPin">0</Property>
+      <Property name="ToPin">0</Property>
+    </Record>
+    <Record Identifier="LINK_06" Type="DSLink">
+      <Property name="FromStage">AGG_DAILY_SUMMARY</Property>
+      <Property name="ToStage">BQ_TGT_SALES_SUMMARY</Property>
+      <Property name="FromPin">0</Property>
+      <Property name="ToPin">0</Property>
+    </Record>
+
+  </Job>
+</DSExport>

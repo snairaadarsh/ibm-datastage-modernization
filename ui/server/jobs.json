@@ -1,0 +1,357 @@
+[
+  [
+    "7e7981b6-c252-4ecf-98a1-0c6674fbfd9e",
+    {
+      "id": "7e7981b6-c252-4ecf-98a1-0c6674fbfd9e",
+      "filename": "1784454954918-509941-inventory_reconciliation_complex.dsx",
+      "originalname": "inventory_reconciliation_complex.dsx",
+      "createdAt": "2026-07-19T09:55:54.921Z",
+      "updatedAt": "2026-07-19T10:02:27.698Z",
+      "status": "completed",
+      "provider": "ag_chat",
+      "apiKey": "",
+      "model": "",
+      "stages": [
+        {
+          "id": "parse",
+          "label": "Parse XML",
+          "icon": "FileCode",
+          "desc": "Parsing DataStage XML structure",
+          "status": "done",
+          "startedAt": "2026-07-19T09:55:56.160Z",
+          "completedAt": "2026-07-19T09:55:56.162Z",
+          "duration": "0.0"
+        },
+        {
+          "id": "normalize",
+          "label": "Normalize",
+          "icon": "GitMerge",
+          "desc": "Normalizing to canonical schema",
+          "status": "done",
+          "startedAt": "2026-07-19T09:55:56.163Z",
+          "completedAt": "2026-07-19T09:57:43.120Z",
+          "duration": "107.0"
+        },
+        {
+          "id": "classify",
+          "label": "Classify",
+          "icon": "BarChart2",
+          "desc": "Scoring complexity & confidence",
+          "status": "done",
+          "startedAt": "2026-07-19T09:57:43.122Z",
+          "completedAt": "2026-07-19T09:58:01.311Z",
+          "duration": "18.2"
+        },
+        {
+          "id": "translate",
+          "label": "Translate",
+          "icon": "Zap",
+          "desc": "Generating PySpark & DataFusion",
+          "status": "done",
+          "startedAt": "2026-07-19T09:59:07.892Z",
+          "completedAt": "2026-07-19T10:00:22.540Z",
+          "duration": "74.6"
+        },
+        {
+          "id": "review",
+          "label": "Code Review",
+          "icon": "ShieldCheck",
+          "desc": "AI code review & optimizations",
+          "status": "done",
+          "startedAt": "2026-07-19T10:00:22.541Z",
+          "completedAt": "2026-07-19T10:00:48.826Z",
+          "duration": "26.3"
+        },
+        {
+          "id": "validate",
+          "label": "Validate",
+          "icon": "CheckCircle",
+          "desc": "Schema & data validation",
+          "status": "done",
+          "startedAt": "2026-07-19T10:00:48.827Z",
+          "completedAt": "2026-07-19T10:02:27.695Z",
+          "duration": "98.9"
+        },
+        {
+          "id": "report",
+          "label": "Report",
+          "icon": "FileText",
+          "desc": "Generating migration report",
+          "status": "done",
+          "startedAt": "2026-07-19T10:02:27.696Z",
+          "completedAt": "2026-07-19T10:02:27.697Z",
+          "duration": "0.0"
+        }
+      ],
+      "currentStage": null,
+      "logs": [
+        {
+          "ts": "2026-07-19T09:55:56.161Z",
+          "level": "info",
+          "message": "Ingesting file: 1784454954918-509941-inventory_reconciliation_complex.dsx"
+        },
+        {
+          "ts": "2026-07-19T09:55:56.162Z",
+          "level": "success",
+          "message": "XML parsed — 9 stages found"
+        },
+        {
+          "ts": "2026-07-19T09:55:56.164Z",
+          "level": "info",
+          "message": "Normalizing to canonical DataStage schema..."
+        },
+        {
+          "ts": "2026-07-19T09:55:56.164Z",
+          "level": "info",
+          "message": "[ParserAgent-Refiner] Sending prompt to Antigravity IDE agent..."
+        },
+        {
+          "ts": "2026-07-19T09:56:34.534Z",
+          "level": "success",
+          "message": "[ParserAgent-Refiner] Received response from Antigravity IDE agent."
+        },
+        {
+          "ts": "2026-07-19T09:56:34.535Z",
+          "level": "info",
+          "message": "[ParserAgent-Refiner] Sending prompt to Antigravity IDE agent..."
+        },
+        {
+          "ts": "2026-07-19T09:57:43.118Z",
+          "level": "success",
+          "message": "[ParserAgent-Refiner] Received response from Antigravity IDE agent."
+        },
+        {
+          "ts": "2026-07-19T09:57:43.119Z",
+          "level": "success",
+          "message": "Normalization complete"
+        },
+        {
+          "ts": "2026-07-19T09:57:43.124Z",
+          "level": "info",
+          "message": "LLM is analyzing job complexity..."
+        },
+        {
+          "ts": "2026-07-19T09:57:43.124Z",
+          "level": "info",
+          "message": "[ClassifierAgent] Sending prompt to Antigravity IDE agent..."
+        },
+        {
+          "ts": "2026-07-19T09:58:01.308Z",
+          "level": "success",
+          "message": "[ClassifierAgent] Received response from Antigravity IDE agent."
+        },
+        {
+          "ts": "2026-07-19T09:58:01.310Z",
+          "level": "info",
+          "message": "Complexity: complex | Confidence: 95.0%"
+        },
+        {
+          "ts": "2026-07-19T09:58:01.310Z",
+          "level": "info",
+          "message": "LLM reasoning: This job contains complex SCD Type 2 dimension logic, multiple sources with left outer join exceptions, lookup stages, s..."
+        },
+        {
+          "ts": "2026-07-19T09:58:01.312Z",
+          "level": "info",
+          "message": "[EscalationHandler] Sending prompt to Antigravity IDE agent..."
+        },
+        {
+          "ts": "2026-07-19T09:58:19.487Z",
+          "level": "success",
+          "message": "[EscalationHandler] Received response from Antigravity IDE agent."
+        },
+        {
+          "ts": "2026-07-19T09:58:19.488Z",
+          "level": "warning",
+          "message": "COMPLEX job — routing to Human Review"
+        },
+        {
+          "ts": "2026-07-19T09:58:35.634Z",
+          "level": "info",
+          "message": "LLM merging AI solution with your guidance..."
+        },
+        {
+          "ts": "2026-07-19T09:58:35.635Z",
+          "level": "info",
+          "message": "[EscalationSolutionProposer] Sending prompt to Antigravity IDE agent..."
+        },
+        {
+          "ts": "2026-07-19T09:58:51.729Z",
+          "level": "success",
+          "message": "[EscalationSolutionProposer] Received response from Antigravity IDE agent."
+        },
+        {
+          "ts": "2026-07-19T09:58:51.730Z",
+          "level": "info",
+          "message": "[EscalationMerger] Sending prompt to Antigravity IDE agent..."
+        },
+        {
+          "ts": "2026-07-19T09:59:07.890Z",
+          "level": "success",
+          "message": "[EscalationMerger] Received response from Antigravity IDE agent."
+        },
+        {
+          "ts": "2026-07-19T09:59:07.891Z",
+          "level": "success",
+          "message": "Merged instruction ready — injecting into pipeline: For TRANSFORM_SCD2_INVENTORY, implement Slowly Changing Dimension (SCD) Type 2 logic in PySpark using Window.partitionBy..."
+        },
+        {
+          "ts": "2026-07-19T09:59:07.892Z",
+          "level": "info",
+          "message": "LLM generating PySpark pipeline code..."
+        },
+        {
+          "ts": "2026-07-19T09:59:07.893Z",
+          "level": "info",
+          "message": "[TranslatorAgent-PySpark] Sending prompt to Antigravity IDE agent..."
+        },
+        {
+          "ts": "2026-07-19T09:59:44.239Z",
+          "level": "success",
+          "message": "[TranslatorAgent-PySpark] Received response from Antigravity IDE agent."
+        },
+        {
+          "ts": "2026-07-19T09:59:44.241Z",
+          "level": "info",
+          "message": "[TranslatorAgent-DataFusion] Sending prompt to Antigravity IDE agent..."
+        },
+        {
+          "ts": "2026-07-19T10:00:22.537Z",
+          "level": "success",
+          "message": "[TranslatorAgent-DataFusion] Received response from Antigravity IDE agent."
+        },
+        {
+          "ts": "2026-07-19T10:00:22.539Z",
+          "level": "success",
+          "message": "Translation complete — 143 lines PySpark, 193 lines DataFusion JSON"
+        },
+        {
+          "ts": "2026-07-19T10:00:22.541Z",
+          "level": "info",
+          "message": "LLM performing code review..."
+        },
+        {
+          "ts": "2026-07-19T10:00:22.542Z",
+          "level": "info",
+          "message": "[ReviewerAgent] Sending prompt to Antigravity IDE agent..."
+        },
+        {
+          "ts": "2026-07-19T10:00:48.824Z",
+          "level": "success",
+          "message": "[ReviewerAgent] Received response from Antigravity IDE agent."
+        },
+        {
+          "ts": "2026-07-19T10:00:48.826Z",
+          "level": "success",
+          "message": "Code review done — score=98% | The generated PySpark and DataFusion scripts are structurally complete and faithfully reproduce the "
+        },
+        {
+          "ts": "2026-07-19T10:00:48.827Z",
+          "level": "info",
+          "message": "LLM generating pytest unit test suite..."
+        },
+        {
+          "ts": "2026-07-19T10:00:48.828Z",
+          "level": "info",
+          "message": "[TesterAgent] Sending prompt to Antigravity IDE agent..."
+        },
+        {
+          "ts": "2026-07-19T10:01:29.163Z",
+          "level": "success",
+          "message": "[TesterAgent] Received response from Antigravity IDE agent."
+        },
+        {
+          "ts": "2026-07-19T10:01:29.164Z",
+          "level": "info",
+          "message": "Generating migration documentation..."
+        },
+        {
+          "ts": "2026-07-19T10:01:29.165Z",
+          "level": "info",
+          "message": "[DocumentationAgent] Sending prompt to Antigravity IDE agent..."
+        },
+        {
+          "ts": "2026-07-19T10:01:55.416Z",
+          "level": "success",
+          "message": "[DocumentationAgent] Received response from Antigravity IDE agent."
+        },
+        {
+          "ts": "2026-07-19T10:01:55.418Z",
+          "level": "info",
+          "message": "ValidatorAgent comparing source architecture to generated outputs (attempt 1/4)..."
+        },
+        {
+          "ts": "2026-07-19T10:01:55.418Z",
+          "level": "info",
+          "message": "[ValidatorAgent] Sending prompt to Antigravity IDE agent..."
+        },
+        {
+          "ts": "2026-07-19T10:02:27.693Z",
+          "level": "success",
+          "message": "[ValidatorAgent] Received response from Antigravity IDE agent."
+        },
+        {
+          "ts": "2026-07-19T10:02:27.694Z",
+          "level": "success",
+          "message": "Validation score: 98% — The PySpark script and DataFusion pipeline structurally match the source DataStage job perfectly, with zero stage or pin"
+        },
+        {
+          "ts": "2026-07-19T10:02:27.694Z",
+          "level": "success",
+          "message": "Validation passed (98% >= 90%) — no critical issues."
+        },
+        {
+          "ts": "2026-07-19T10:02:27.697Z",
+          "level": "success",
+          "message": "Pipeline complete in 391.5s"
+        }
+      ],
+      "classification": {
+        "complexity": "complex",
+        "confidenceScore": 95,
+        "stageCount": 9
+      },
+      "outputs": {
+        "pyspark": "# MIGRATION CHECKLIST\n# Sources      : 2 — SEQ_FILE_WAREHOUSE_STOCK, DB2_SRC_ERP_INVENTORY\n# Joins        : 1 — JOIN_WAREHOUSE_ERP : LeftOuter\n# Branches     : 2 — JOIN_WAREHOUSE_ERP (Branch 0 to TRANSFORM_SCD2_INVENTORY, Branch 1 to EXCEPTION_UNMATCHED), TRANSFORM_SCD2_INVENTORY (Branch 0 to SORT_BY_ITEM)\n# Computed cols: AVAILABLE_QTY, INVENTORY_VALUE, STOCK_STATUS, REORDER_REQUIRED, DAYS_UNTIL_REORDER, RECORD_HASH, SCD_EFF_START_DATE, SCD_EFF_END_DATE, IS_CURRENT_FLAG\n# Sinks        : 2 — BQ_TGT_INVENTORY_DIM, SEQ_FILE_EXCEPTIONS\n# Exceptions   : yes — SEQ_FILE_EXCEPTIONS\n\nimport os\nfrom pyspark.sql import SparkSession\nfrom pyspark.sql import functions as F\nfrom pyspark.sql.window import Window\n\n# Initialize Spark Session with configuration parameters\nspark = (\n    SparkSession.builder\n    .appName(\"JOB_INVENTORY_RECONCILIATION\")\n    .config(\"spark.sql.adaptive.enabled\", \"true\")\n    .config(\"spark.sql.adaptive.coalescePartitions\", \"true\")\n    .getOrCreate()\n)\n\n# ── Source: DB2_SRC_ERP_INVENTORY\ndb2_url = os.environ.get(\"ERP_DB2_PROD_URL\", \"jdbc:db2://localhost:50000/ERPDB\")\ndb2_user = os.environ.get(\"ERP_DB2_PROD_USER\", \"db2user\")\ndb2_password = os.environ.get(\"ERP_DB2_PROD_PASSWORD\", \"\")\ndb2_query = \"SELECT ITEM_CODE, ITEM_DESC, CATEGORY, SUPPLIER_ID, REORDER_LEVEL, LEAD_TIME_DAYS, IS_ACTIVE, EFF_START_DATE, EFF_END_DATE FROM ERP.ITEM_MASTER WHERE IS_ACTIVE = 'Y'\"\n\ndf_db2_src_erp_inventory = (\n    spark.read\n    .format(\"jdbc\")\n    .option(\"url\", db2_url)\n    .option(\"user\", db2_user)\n    .option(\"password\", db2_password)\n    .option(\"query\", db2_query)\n    .load()\n)\n\n# ── Source: SEQ_FILE_WAREHOUSE_STOCK\nds_rundate = os.environ.get(\"DS_RUNDATE\", \"default_date\")\nwarehouse_stock_path = os.environ.get(\n    \"SEQ_FILE_WAREHOUSE_STOCK_PATH\",\n    f\"/data/warehouse/stock_snapshot_{ds_rundate}.csv\"\n)\n\ndf_seq_file_warehouse_stock = (\n    spark.read\n    .format(\"csv\")\n    .option(\"header\", \"true\")\n    .option(\"inferSchema\", \"true\")\n    .option(\"delimiter\", \",\")\n    .load(warehouse_stock_path)\n)\n\n# ── Stage: LOOKUP_SUPPLIER_INFO\n# Since this represents a supplier information lookup reference dataset, we broadcast it\nsupplier_ref_path = os.environ.get(\"SUPPLIER_REF_PATH\", \"/data/reference/supplier_info.csv\")\ndf_supplier_ref = (\n    spark.read\n    .format(\"csv\")\n    .option(\"header\", \"true\")\n    .option(\"inferSchema\", \"true\")\n    .load(supplier_ref_path)\n)\n\n# Perform join on SUPPLIER_ID with continue-on-no-match (left join)\ndf_lookup_supplier_info = (\n    df_db2_src_erp_inventory.join(\n        F.broadcast(df_supplier_ref),\n        on=\"SUPPLIER_ID\",\n        how=\"left\"\n    )\n)\n\n# ── Stage: JOIN_WAREHOUSE_ERP\n# Match records flow to main branch, unmatched warehouse records flow to exception branch\ndf_join_warehouse_erp = (\n    df_seq_file_warehouse_stock.join(\n        df_lookup_supplier_info,\n        on=\"ITEM_CODE\",\n        how=\"left\"\n    )\n)\n\n# ── Branch 1 (unmatched/exception) → EXCEPTION_UNMATCHED\ndf_exception_unmatched = (\n    df_seq_file_warehouse_stock.join(\n        df_lookup_supplier_info,\n        on=\"ITEM_CODE\",\n        how=\"left_anti\"\n    )\n)\n\nexceptions_path = os.environ.get(\n    \"SEQ_FILE_EXCEPTIONS_PATH\",\n    f\"/data/exceptions/inventory_exceptions_{ds_rundate}.csv\"\n)\n\ndf_exception_unmatched.write.format(\"csv\").option(\"header\", \"true\").mode(\"overwrite\").save(exceptions_path)\n\n# ── Stage: TRANSFORM_SCD2_INVENTORY\n# Compute new metrics and slowly changing dimension Type 2 window columns\nscd_window = Window.partitionBy(\"ITEM_CODE\").orderBy(\"SCD_EFF_START_DATE\")\n\ndf_transform_scd2_inventory = (\n    df_join_warehouse_erp\n    .withColumn(\"AVAILABLE_QTY\", F.coalesce(F.col(\"ON_HAND_QTY\"), F.lit(0)) - F.coalesce(F.col(\"RESERVED_QTY\"), F.lit(0)))\n    .withColumn(\"INVENTORY_VALUE\", F.coalesce(F.col(\"ON_HAND_QTY\"), F.lit(0)) * F.coalesce(F.col(\"UNIT_COST\"), F.lit(0.0)))\n    .withColumn(\n        \"STOCK_STATUS\",\n        F.when(F.col(\"AVAILABLE_QTY\") == 0, F.lit(\"OUT_OF_STOCK\"))\n        .when(F.col(\"AVAILABLE_QTY\") < F.col(\"REORDER_LEVEL\"), F.lit(\"LOW_STOCK\"))\n        .otherwise(F.lit(\"IN_STOCK\"))\n    )\n    .withColumn(\"REORDER_REQUIRED\", F.when(F.col(\"AVAILABLE_QTY\") < F.col(\"REORDER_LEVEL\"), F.lit(1)).otherwise(F.lit(0)))\n    .withColumn(\"DAYS_UNTIL_REORDER\", F.when(F.col(\"REORDER_REQUIRED\") == 1, F.col(\"LEAD_TIME_DAYS\")).otherwise(F.lit(-1)))\n    .withColumn(\"RECORD_HASH\", F.sha2(F.concat_ws(\"|\", \"ITEM_CODE\", \"WAREHOUSE_ID\", \"ON_HAND_QTY\", \"UNIT_COST\"), 256))\n    .withColumn(\"SCD_EFF_START_DATE\", F.current_date())\n    .withColumn(\n        \"SCD_EFF_END_DATE\",\n        F.coalesce(\n            F.lead(\"SCD_EFF_START_DATE\").over(scd_window),\n            F.lit(\"9999-12-31\").cast(\"date\")\n        )\n    )\n    .withColumn(\n        \"IS_CURRENT_FLAG\",\n        F.when(F.col(\"SCD_EFF_END_DATE\") == F.lit(\"9999-12-31\").cast(\"date\"), F.lit(1)).otherwise(F.lit(0))\n    )\n)\n\n# ── Stage: SORT_BY_ITEM\ndf_sort_by_item = df_transform_scd2_inventory.orderBy(\"ITEM_CODE\", \"WAREHOUSE_ID\")\n\n# ── Target: BQ_TGT_INVENTORY_DIM\nbq_project = os.environ.get(\"BQ_PROJECT_ID\", \"acme-analytics-prod\")\nbq_dataset = os.environ.get(\"BQ_DATASET\", \"supply_chain\")\nbq_table = f\"{bq_project}.{bq_dataset}.inventory_dimension\"\n\ndf_sort_by_item.write.format(\"bigquery\").option(\"table\", bq_table).option(\"parentProject\", bq_project).mode(\"append\").save()\n\n# Stop spark session\nspark.stop()",
+        "datafusion": "{\n  \"checklist\": {\n    \"sources\": [\n      \"SEQ_FILE_WAREHOUSE_STOCK\",\n      \"DB2_SRC_ERP_INVENTORY\"\n    ],\n    \"joins\": {\n      \"JOIN_WAREHOUSE_ERP\": \"LeftOuter\",\n      \"LOOKUP_SUPPLIER_INFO\": \"Inner\"\n    },\n    \"branches\": {\n      \"JOIN_WAREHOUSE_ERP\": [\n        \"TRANSFORM_SCD2_INVENTORY\",\n        \"EXCEPTION_UNMATCHED\"\n      ]\n    },\n    \"computed_cols\": [\n      \"AVAILABLE_QTY\",\n      \"INVENTORY_VALUE\",\n      \"STOCK_STATUS\",\n      \"REORDER_REQUIRED\",\n      \"DAYS_UNTIL_REORDER\",\n      \"RECORD_HASH\",\n      \"SCD_EFF_START_DATE\",\n      \"SCD_EFF_END_DATE\",\n      \"IS_CURRENT_FLAG\"\n    ],\n    \"sinks\": [\n      \"BQ_TGT_INVENTORY_DIM\",\n      \"SEQ_FILE_EXCEPTIONS\"\n    ],\n    \"exception_sinks\": [\n      \"SEQ_FILE_EXCEPTIONS\"\n    ]\n  },\n  \"artifactType\": \"pipeline\",\n  \"config\": {\n    \"stages\": [\n      {\n        \"name\": \"SEQ_FILE_WAREHOUSE_STOCK\",\n        \"type\": \"batchsource\",\n        \"plugin\": {\n          \"name\": \"File\",\n          \"type\": \"batchsource\",\n          \"label\": \"SEQ_FILE_WAREHOUSE_STOCK\",\n          \"properties\": {\n            \"path\": \"${SEQ_FILE_WAREHOUSE_STOCK_PATH}\",\n            \"format\": \"delimited\",\n            \"enableHeader\": \"true\"\n          }\n        }\n      },\n      {\n        \"name\": \"DB2_SRC_ERP_INVENTORY\",\n        \"type\": \"batchsource\",\n        \"plugin\": {\n          \"name\": \"Database\",\n          \"type\": \"batchsource\",\n          \"label\": \"DB2_SRC_ERP_INVENTORY\",\n          \"properties\": {\n            \"connectionString\": \"${ERP_DB2_PROD_URL}\",\n            \"importQuery\": \"SELECT ITEM_CODE, ITEM_DESC, CATEGORY, SUPPLIER_ID, REORDER_LEVEL, LEAD_TIME_DAYS, IS_ACTIVE, EFF_START_DATE, EFF_END_DATE FROM ERP.ITEM_MASTER WHERE IS_ACTIVE = 'Y'\"\n          }\n        }\n      },\n      {\n        \"name\": \"LOOKUP_SUPPLIER_INFO\",\n        \"type\": \"transform\",\n        \"plugin\": {\n          \"name\": \"Joiner\",\n          \"type\": \"transform\",\n          \"label\": \"LOOKUP_SUPPLIER_INFO\",\n          \"properties\": {\n            \"joinKeys\": \"SUPPLIER_ID\",\n            \"joinType\": \"Inner\"\n          }\n        }\n      },\n      {\n        \"name\": \"JOIN_WAREHOUSE_ERP\",\n        \"type\": \"transform\",\n        \"plugin\": {\n          \"name\": \"Joiner\",\n          \"type\": \"transform\",\n          \"label\": \"JOIN_WAREHOUSE_ERP\",\n          \"properties\": {\n            \"joinKeys\": \"ITEM_CODE\",\n            \"joinType\": \"Outer\",\n            \"requiredInputs\": \"SEQ_FILE_WAREHOUSE_STOCK\"\n          }\n        }\n      },\n      {\n        \"name\": \"TRANSFORM_SCD2_INVENTORY\",\n        \"type\": \"transform\",\n        \"plugin\": {\n          \"name\": \"Wrangler\",\n          \"type\": \"transform\",\n          \"label\": \"TRANSFORM_SCD2_INVENTORY\",\n          \"properties\": {\n            \"directives\": \"set-column AVAILABLE_QTY ON_HAND_QTY - RESERVED_QTY\\nset-column INVENTORY_VALUE ON_HAND_QTY * UNIT_COST\\nset-column STOCK_STATUS if(AVAILABLE_QTY == 0, 'OUT_OF_STOCK', if(AVAILABLE_QTY < REORDER_LEVEL, 'LOW_STOCK', 'IN_STOCK'))\\nset-column REORDER_REQUIRED if(AVAILABLE_QTY < REORDER_LEVEL, 1, 0)\\nset-column DAYS_UNTIL_REORDER if(REORDER_REQUIRED == 1, LEAD_TIME_DAYS, -1)\\nset-column RECORD_HASH md5(concat(ITEM_CODE, WAREHOUSE_ID, string(ON_HAND_QTY), string(UNIT_COST)))\\nset-column SCD_EFF_START_DATE today()\"\n          }\n        }\n      },\n      {\n        \"name\": \"SCD2_WINDOW_PROCESSOR\",\n        \"type\": \"transform\",\n        \"plugin\": {\n          \"name\": \"Spark SQL\",\n          \"type\": \"transform\",\n          \"label\": \"SCD2_WINDOW_PROCESSOR\",\n          \"properties\": {\n            \"sql\": \"SELECT *, COALESCE(LEAD(SCD_EFF_START_DATE) OVER(PARTITION BY ITEM_CODE ORDER BY SCD_EFF_START_DATE), CAST('9999-12-31' AS DATE)) AS SCD_EFF_END_DATE, IF(LEAD(SCD_EFF_START_DATE) OVER(PARTITION BY ITEM_CODE ORDER BY SCD_EFF_START_DATE) IS NULL, 1, 0) AS IS_CURRENT_FLAG FROM mytable\"\n          }\n        }\n      },\n      {\n        \"name\": \"SORT_BY_ITEM\",\n        \"type\": \"transform\",\n        \"plugin\": {\n          \"name\": \"Sorter\",\n          \"type\": \"transform\",\n          \"label\": \"SORT_BY_ITEM\",\n          \"properties\": {\n            \"sortKeys\": \"ITEM_CODE ASC, WAREHOUSE_ID ASC\"\n          }\n        }\n      },\n      {\n        \"name\": \"BQ_TGT_INVENTORY_DIM\",\n        \"type\": \"batchsink\",\n        \"plugin\": {\n          \"name\": \"BigQueryTable\",\n          \"type\": \"batchsink\",\n          \"label\": \"BQ_TGT_INVENTORY_DIM\",\n          \"properties\": {\n            \"dataset\": \"${BQ_DATASET}\",\n            \"table\": \"inventory_dimension\",\n            \"operation\": \"MERGE\",\n            \"relationTableKey\": \"ITEM_CODE\"\n          }\n        }\n      },\n      {\n        \"name\": \"SEQ_FILE_EXCEPTIONS\",\n        \"type\": \"batchsink\",\n        \"plugin\": {\n          \"name\": \"File\",\n          \"type\": \"batchsink\",\n          \"label\": \"SEQ_FILE_EXCEPTIONS\",\n          \"properties\": {\n            \"path\": \"${SEQ_FILE_EXCEPTIONS_PATH}\",\n            \"format\": \"csv\"\n          }\n        }\n      }\n    ],\n    \"connections\": [\n      {\n        \"from\": \"SEQ_FILE_WAREHOUSE_STOCK\",\n        \"to\": \"JOIN_WAREHOUSE_ERP\"\n      },\n      {\n        \"from\": \"DB2_SRC_ERP_INVENTORY\",\n        \"to\": \"LOOKUP_SUPPLIER_INFO\"\n      },\n      {\n        \"from\": \"LOOKUP_SUPPLIER_INFO\",\n        \"to\": \"JOIN_WAREHOUSE_ERP\"\n      },\n      {\n        \"from\": \"JOIN_WAREHOUSE_ERP\",\n        \"to\": \"TRANSFORM_SCD2_INVENTORY\"\n      },\n      {\n        \"from\": \"JOIN_WAREHOUSE_ERP\",\n        \"to\": \"SEQ_FILE_EXCEPTIONS\"\n      },\n      {\n        \"from\": \"TRANSFORM_SCD2_INVENTORY\",\n        \"to\": \"SCD2_WINDOW_PROCESSOR\"\n      },\n      {\n        \"from\": \"SCD2_WINDOW_PROCESSOR\",\n        \"to\": \"SORT_BY_ITEM\"\n      },\n      {\n        \"from\": \"SORT_BY_ITEM\",\n        \"to\": \"BQ_TGT_INVENTORY_DIM\"\n      }\n    ]\n  }\n}",
+        "tests": "import pytest\nfrom pyspark.sql import SparkSession\nfrom pyspark.sql import functions as F\nfrom pyspark.sql.types import StructType, StructField, StringType, IntegerType, DoubleType, DateType\nfrom pyspark.sql.window import Window\n\n@pytest.fixture(scope=\"session\")\ndef spark():\n    return (\n        SparkSession.builder\n        .master(\"local[*]\")\n        .appName(\"pytest-pyspark-job-reconciliation\")\n        .config(\"spark.sql.adaptive.enabled\", \"false\")\n        .getOrCreate()\n    )\n\ndef test_available_qty(spark):\n    schema = StructType([\n        StructField(\"ON_HAND_QTY\", IntegerType(), True),\n        StructField(\"RESERVED_QTY\", IntegerType(), True)\n    ])\n    data = [(10, 2), (5, 5), (0, 0), (None, None)]\n    df = spark.createDataFrame(data, schema)\n    \n    res = df.withColumn(\"AVAILABLE_QTY\", F.coalesce(F.col(\"ON_HAND_QTY\"), F.lit(0)) - F.coalesce(F.col(\"RESERVED_QTY\"), F.lit(0))).collect()\n    \n    assert res[0][\"AVAILABLE_QTY\"] == 8\n    assert res[1][\"AVAILABLE_QTY\"] == 0\n    assert res[2][\"AVAILABLE_QTY\"] == 0\n    assert res[3][\"AVAILABLE_QTY\"] == 0\n\ndef test_inventory_value(spark):\n    schema = StructType([\n        StructField(\"ON_HAND_QTY\", IntegerType(), True),\n        StructField(\"UNIT_COST\", DoubleType(), True)\n    ])\n    data = [(10, 1.5), (0, 10.0), (None, None)]\n    df = spark.createDataFrame(data, schema)\n    \n    res = df.withColumn(\"INVENTORY_VALUE\", F.coalesce(F.col(\"ON_HAND_QTY\"), F.lit(0)) * F.coalesce(F.col(\"UNIT_COST\"), F.lit(0.0))).collect()\n    \n    assert res[0][\"INVENTORY_VALUE\"] == 15.0\n    assert res[1][\"INVENTORY_VALUE\"] == 0.0\n    assert res[2][\"INVENTORY_VALUE\"] == 0.0\n\ndef test_stock_status_and_reorder(spark):\n    schema = StructType([\n        StructField(\"AVAILABLE_QTY\", IntegerType(), True),\n        StructField(\"REORDER_LEVEL\", IntegerType(), True),\n        StructField(\"LEAD_TIME_DAYS\", IntegerType(), True)\n    ])\n    data = [\n        (0, 5, 2),\n        (3, 5, 3),\n        (10, 5, 4)\n    ]\n    df = spark.createDataFrame(data, schema)\n    \n    res = (\n        df.withColumn(\n            \"STOCK_STATUS\",\n            F.when(F.col(\"AVAILABLE_QTY\") == 0, F.lit(\"OUT_OF_STOCK\"))\n            .when(F.col(\"AVAILABLE_QTY\") < F.col(\"REORDER_LEVEL\"), F.lit(\"LOW_STOCK\"))\n            .otherwise(F.lit(\"IN_STOCK\"))\n        )\n        .withColumn(\"REORDER_REQUIRED\", F.when(F.col(\"AVAILABLE_QTY\") < F.col(\"REORDER_LEVEL\"), F.lit(1)).otherwise(F.lit(0)))\n        .withColumn(\"DAYS_UNTIL_REORDER\", F.when(F.col(\"REORDER_REQUIRED\") == 1, F.col(\"LEAD_TIME_DAYS\")).otherwise(F.lit(-1)))\n    ).collect()\n    \n    assert res[0][\"STOCK_STATUS\"] == \"OUT_OF_STOCK\"\n    assert res[0][\"REORDER_REQUIRED\"] == 1\n    assert res[0][\"DAYS_UNTIL_REORDER\"] == 2\n    \n    assert res[1][\"STOCK_STATUS\"] == \"LOW_STOCK\"\n    assert res[1][\"REORDER_REQUIRED\"] == 1\n    assert res[1][\"DAYS_UNTIL_REORDER\"] == 3\n    \n    assert res[2][\"STOCK_STATUS\"] == \"IN_STOCK\"\n    assert res[2][\"REORDER_REQUIRED\"] == 0\n    assert res[2][\"DAYS_UNTIL_REORDER\"] == -1\n\ndef test_record_hash(spark):\n    schema = StructType([\n        StructField(\"ITEM_CODE\", StringType(), True),\n        StructField(\"WAREHOUSE_ID\", StringType(), True),\n        StructField(\"ON_HAND_QTY\", IntegerType(), True),\n        StructField(\"UNIT_COST\", DoubleType(), True)\n    ])\n    data = [(\"A01\", \"W01\", 10, 1.5)]\n    df = spark.createDataFrame(data, schema)\n    \n    res = df.withColumn(\"RECORD_HASH\", F.sha2(F.concat_ws(\"|\", \"ITEM_CODE\", \"WAREHOUSE_ID\", \"ON_HAND_QTY\", \"UNIT_COST\"), 256)).collect()\n    assert len(res[0][\"RECORD_HASH\"]) == 64\n\ndef test_scd2_logic(spark):\n    schema = StructType([\n        StructField(\"ITEM_CODE\", StringType(), True),\n        StructField(\"SCD_EFF_START_DATE\", StringType(), True)\n    ])\n    data = [\n        (\"ITEM_A\", \"2026-01-01\"),\n        (\"ITEM_A\", \"2026-02-01\"),\n        (\"ITEM_B\", \"2026-01-15\")\n    ]\n    df = spark.createDataFrame(data, schema)\n    \n    # Cast strings to dates for checking\n    df = df.withColumn(\"SCD_EFF_START_DATE\", F.col(\"SCD_EFF_START_DATE\").cast(\"date\"))\n    \n    scd_window = Window.partitionBy(\"ITEM_CODE\").orderBy(\"SCD_EFF_START_DATE\")\n    res = (\n        df.withColumn(\n            \"SCD_EFF_END_DATE\",\n            F.coalesce(\n                F.lead(\"SCD_EFF_START_DATE\").over(scd_window),\n                F.lit(\"9999-12-31\").cast(\"date\")\n            )\n        )\n        .withColumn(\n            \"IS_CURRENT_FLAG\",\n            F.when(F.col(\"SCD_EFF_END_DATE\") == F.lit(\"9999-12-31\").cast(\"date\"), F.lit(1)).otherwise(F.lit(0))\n        )\n        .orderBy(\"ITEM_CODE\", \"SCD_EFF_START_DATE\")\n    ).collect()\n    \n    assert str(res[0][\"SCD_EFF_END_DATE\"]) == \"2026-02-01\"\n    assert res[0][\"IS_CURRENT_FLAG\"] == 0\n    \n    assert str(res[1][\"SCD_EFF_END_DATE\"]) == \"9999-12-31\"\n    assert res[1][\"IS_CURRENT_FLAG\"] == 1\n    \n    assert str(res[2][\"SCD_EFF_END_DATE\"]) == \"9999-12-31\"\n    assert res[2][\"IS_CURRENT_FLAG\"] == 1",
+        "report": "{\n  \"summary\": {\n    \"jobName\": \"JOB_INVENTORY_RECONCILIATION\",\n    \"sourceFile\": \"1784454954918-509941-inventory_reconciliation_complex.dsx\",\n    \"generatedAt\": \"2026-07-19T15:32:27\",\n    \"status\": \"completed\",\n    \"complexity\": \"complex\",\n    \"confidenceScore\": 95.0,\n    \"elapsedSeconds\": 391.5,\n    \"linesGenerated\": {\n      \"pyspark\": 143,\n      \"datafusion\": 193,\n      \"tests\": 133\n    },\n    \"stagesCount\": 9,\n    \"userInstruction\": \"For TRANSFORM_SCD2_INVENTORY, implement Slowly Changing Dimension (SCD) Type 2 logic in PySpark using Window.partitionBy('ITEM_CODE').orderBy('EFF_START_DATE') to track historical records, defaulting EFF_END_DATE to '9999-12-31' and IS_CURRENT_FLAG to 1 for the active record.\\nFor JOIN_WAREHOUSE_ERP, implement a left outer join between the warehouse stock and ERP inventory datasets on ITEM_CODE, and route unmatched records (where ERP columns are null) to EXCEPTION_UNMATCHED.\\nFor LOOKUP_SUPPLIER_INFO, perform a join on SUPPLIER_ID with continue-on-no-match handling, ensuring null supplier attributes are filled with default fallback values.\\nFor BQ_TGT_INVENTORY_DIM, perform a MERGE write operation using ITEM_CODE as the matching key.\"\n  },\n  \"classification\": {\n    \"complexity\": \"complex\",\n    \"confidence_score\": 0.95,\n    \"reasoning\": \"This job contains complex SCD Type 2 dimension logic, multiple sources with left outer join exceptions, lookup stages, sorting, and multi-format target destinations, making it highly complex for migration.\",\n    \"ambiguity_flags\": [\n      \"SCD Type 2 column tracking and keys\",\n      \"NoMatchHandling for normal lookup stage\",\n      \"Join exception path routing logic\"\n    ],\n    \"recommendations\": [\n      \"Verify the BigQuery target merge key columns\",\n      \"Confirm slowly changing dimension type 2 behavior in PySpark\",\n      \"Check lookup exception handling parameters\"\n    ],\n    \"stage_count\": 9,\n    \"risk_areas\": [\n      \"TRANSFORM_SCD2_INVENTORY\",\n      \"JOIN_WAREHOUSE_ERP\",\n      \"LOOKUP_SUPPLIER_INFO\"\n    ],\n    \"automation_action\": \"full_human_review\"\n  },\n  \"review\": {\n    \"passed\": true,\n    \"score\": 0.98,\n    \"summary\": \"The generated PySpark and DataFusion scripts are structurally complete and faithfully reproduce the legacy logic, including outer joins, SCD Type 2 windows, and parameterization.\",\n    \"structural_diff\": {},\n    \"issues\": [\n      {\n        \"severity\": \"warning\",\n        \"location\": \"TRANSFORM_SCD2_INVENTORY\",\n        \"issue\": \"SCD Type 2 start dates default to current system date.\",\n        \"suggestion\": \"Verify if using the transaction date column from the warehouse file is preferred.\"\n      }\n    ],\n    \"strengths\": [\n      \"Perfect matching of the LeftOuter join exception anti-join logic in PySpark\",\n      \"Proper broadcast join hint usage for LOOKUP_SUPPLIER_INFO\",\n      \"Complete compliance with all parameterization rules\"\n    ],\n    \"critical_fixes_required\": false\n  },\n  \"validation\": {\n    \"score\": 98,\n    \"summary\": \"The PySpark script and DataFusion pipeline structurally match the source DataStage job perfectly, with zero stage or pin routing omissions.\",\n    \"issues\": [],\n    \"strengths\": [\n      \"Faithful LeftOuter join anti-join exception splitting in PySpark\",\n      \"Proper window partition logic for Slowly Changing Dimension Type 2 implementation\"\n    ],\n    \"critical_issues\": false,\n    \"passed\": true\n  },\n  \"recommendations\": [\n    \"Verify the BigQuery target merge key columns\",\n    \"Confirm slowly changing dimension type 2 behavior in PySpark\",\n    \"Check lookup exception handling parameters\"\n  ]\n}"
+      },
+      "humanReview": {
+        "reason": "This job contains complex SCD Type 2 dimension logic, multiple sources with left outer join exceptions, lookup stages, sorting, and multi-format target destinations, making it highly complex for migration.",
+        "llmExplanation": "• This job requires human review because it implements complex Slowly Changing Dimension (SCD) Type 2 tracking logic in TRANSFORM_SCD2_INVENTORY that must be validated for PySpark schema compatibility.\n• The LOOKUP_SUPPLIER_INFO stage contains normal lookup logic where the 'Continue' no-match handling behavior must be verified to prevent silent source mismatches.\n• A left outer join exception routing logic is executed in JOIN_WAREHOUSE_ERP that risks misdirecting unmatched inventory records to error tables if join keys are incorrect.\n• The reviewer must verify the merge key columns and database write mode parameters for the final BigQuery target connector load.",
+        "complexity": "complex",
+        "flaggedStages": [
+          "TRANSFORM_SCD2_INVENTORY",
+          "JOIN_WAREHOUSE_ERP",
+          "LOOKUP_SUPPLIER_INFO"
+        ],
+        "ambiguityFlags": [
+          "SCD Type 2 column tracking and keys",
+          "NoMatchHandling for normal lookup stage",
+          "Join exception path routing logic"
+        ],
+        "recommendations": [
+          "Verify the BigQuery target merge key columns",
+          "Confirm slowly changing dimension type 2 behavior in PySpark",
+          "Check lookup exception handling parameters"
+        ],
+        "riskAreas": [
+          "TRANSFORM_SCD2_INVENTORY",
+          "JOIN_WAREHOUSE_ERP",
+          "LOOKUP_SUPPLIER_INFO"
+        ],
+        "confidence": 95,
+        "requiresApproval": true
+      },
+      "humanReviewDecision": {
+        "decision": "comment",
+        "comment": "fix and proceed",
+        "decidedAt": "2026-07-19T09:58:35.406Z"
+      },
+      "error": null,
+      "elapsedSeconds": 391.5,
+      "pid": 26848
+    }
+  ]
+]
