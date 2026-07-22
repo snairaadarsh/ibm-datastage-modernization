@@ -1,7 +1,8 @@
 """
-Agent 6: Documentation Agent — Fully LLM-driven (No Fallbacks)
+Agent 6: Documentation Agent — v2.0 Production Documentation (No Fallbacks)
 Sends the complete migration context to the LLM and asks it to write
-a natural-language migration report. Strictly requires LLM completion.
+a natural-language migration report following the v2.0 7-section standard.
+Strictly requires LLM completion.
 """
 
 from __future__ import annotations
@@ -10,10 +11,84 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+_DOCS_SYSTEM = """\
+You are a technical writer at a data engineering consultancy. Write a professional \
+migration documentation report in Markdown for an IBM DataStage job that has been \
+migrated to Apache PySpark and Google Cloud DataFusion.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MANDATORY SECTIONS (in this exact order)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. **Executive Summary**
+   - What this job does (data flow summary in 2–3 sentences)
+   - Why it was migrated (business drivers)
+   - Outcome summary (migration completeness, overall confidence)
+
+2. **Migration Overview**
+   A markdown table with these rows:
+   | Metric | Value |
+   | Job Name | <name> |
+   | Complexity | <complexity> |
+   | Confidence | <score %> |
+   | Stage Count | <N> |
+   | Source Systems | <list> |
+   | Target Systems | <list> |
+   | Parameters | <list or None> |
+   | Review Score | <score %> |
+   | Migration Completeness | <pct>% |
+
+3. **Source-to-Target Mapping**
+   Plain English description of data flow:
+   - Where data originates (source stage names, SQL queries)
+   - Each transformation step (what is computed, why)
+   - Where data lands (target stage names, write modes)
+   - Exception/reject paths and their destinations
+
+4. **Migration Decisions**
+   Explain each non-trivial translation decision:
+   - Join type choices (LeftOuter → left join + anti-join, why)
+   - Lookup implementation (broadcast join, failure mode)
+   - SCD implementation (window spec, sentinel dates, surrogate keys)
+   - Aggregation choices
+   - Partitioning approach
+   - Anything marked as a risk area or ambiguity flag
+
+5. **Known Risks & Limitations**
+   Specific risks (not generic). For each risk:
+   - Risk description tied to a specific stage
+   - Severity (HIGH / MEDIUM / LOW)
+   - Recommended mitigation action
+
+6. **Deployment Checklist**
+   Specific to this job's connections, parameters, and environment:
+   - Environment variables that MUST be set (list them)
+   - IAM permissions required (BigQuery, Oracle, etc.)
+   - Pre-flight checks (source table existence, BQ dataset creation)
+   - Run command with correct --run-mode flag
+
+7. **Testing Guidance**
+   How to validate the migrated pipeline:
+   - Which pytest test classes cover which stages
+   - Row count checks to run post-load
+   - Data reconciliation queries (specific to this job's source/target tables)
+   - Boundary cases to verify manually
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STYLE RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  • Professional, precise tone
+  • Be SPECIFIC to this job — no generic boilerplate
+  • Reference actual stage names, column names, and SQL from the input
+  • Numbered sections with ## headings
+  • Return ONLY the Markdown. No code fences around the entire document.\
+"""
+
 
 class DocumentationAgent:
     """
     Generates human-readable migration documentation using an LLM.
+    v2.0: Enforces the 7-section standard with metric tables,
+    stage-specific risk analysis, and deployment checklist.
     Strictly requires LLM and raises a RuntimeError on failure.
     """
 
@@ -55,9 +130,12 @@ class DocumentationAgent:
         review    = job.get("review", {})
         translation = job.get("translation", {})
 
+        # Build stage list with full detail
         stage_list = "\n".join(
-            f"  - [{s.get('id','')}] {s.get('stage_type','')} ({s.get('category','')}): "
-            f"{', '.join(c.get('name','') for c in s.get('output_columns',[])[:4])}"
+            f"  - [{s.get('id','')}] {s.get('stage_type','')} ({s.get('category','')}):"
+            f" cols={[c.get('name','') for c in s.get('output_columns',[])[:4]]}"
+            f" transforms={[(t.get('output_column',''), t.get('expression','')) for t in s.get('transformations',[])[:3]]}"
+            f" join_type={s.get('join_type','')} join_key={s.get('join_key','')} write_mode={s.get('write_mode','')}"
             for s in stages[:20]
         )
 
@@ -68,27 +146,15 @@ class DocumentationAgent:
 
         pyspark_lines = len((translation.get("pyspark") or "").splitlines())
 
-        system = (
-            "You are a technical writer at a data engineering consultancy. "
-            "Write a professional migration documentation report in Markdown for an IBM DataStage "
-            "job that has been migrated to Apache PySpark and Google Cloud DataFusion.\n\n"
-            "The report must include these sections:\n"
-            "  1. **Executive Summary** — What this job does, why it was migrated, and what the outcome is\n"
-            "  2. **Migration Overview** — A table with key metrics (complexity, confidence, stage count, etc.)\n"
-            "  3. **Source-to-Target Mapping** — Describe the data flow from sources to targets in plain English\n"
-            "  4. **Migration Decisions** — Explain each non-trivial translation decision (e.g. why a join was implemented a certain way)\n"
-            "  5. **Known Risks & Limitations** — Specific risks based on the review issues and ambiguity flags\n"
-            "  6. **Deployment Checklist** — Step-by-step checklist specific to this job's connections and parameters\n"
-            "  7. **Testing Guidance** — How to validate the migrated pipeline produces correct results\n\n"
-            "Write in a professional, precise tone. Be specific to this job — do not write generic text. "
-            "Return ONLY the Markdown text. No code fences around the Markdown."
-        )
+        # Compute migration completeness from review score
+        completeness_pct = round(review.get("score", 1.0) * 100, 1)
 
         user = (
-            f"Write migration documentation for this IBM DataStage job.\n\n"
+            f"Write the v2.0 migration documentation report for this IBM DataStage job.\n\n"
             f"Job name: {job_name}\n"
             f"Description: {job_desc}\n"
             f"Complexity: {cls.get('complexity','?')} | Confidence: {cls.get('confidence_score',0):.0%}\n"
+            f"Migration completeness: {completeness_pct}%\n"
             f"LLM Analysis: {cls.get('reasoning','')}\n"
             f"Ambiguity flags: {cls.get('ambiguity_flags',[])}\n"
             f"Recommendations from classifier: {cls.get('recommendations',[])}\n"
@@ -100,12 +166,13 @@ class DocumentationAgent:
             f"Connections: {[(c.get('name',''), c.get('stage_type','')) for c in conns[:6]]}\n\n"
             f"Code review result: passed={review.get('passed',True)}, score={review.get('score',1.0):.0%}\n"
             f"Review summary: {review.get('summary','')}\n"
-            f"Review issues:\n{review_issues}\n\n"
+            f"Review issues:\n{review_issues}\n"
+            f"Review strengths: {review.get('strengths',[])[:3]}\n\n"
             f"PySpark output: {pyspark_lines} lines generated\n"
             f"DataFusion output: {'Generated' if translation.get('datafusion') else 'Not generated'}"
         )
 
-        return self.llm.complete(system, user, agent_name="DocumentationAgent")
+        return self.llm.complete(_DOCS_SYSTEM, user, agent_name="DocumentationAgent")
 
     def _safe(self, name: str) -> str:
         return name.lower().replace(" ", "_").replace("-", "_").replace(".", "_")

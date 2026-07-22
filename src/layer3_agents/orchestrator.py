@@ -1,7 +1,9 @@
 """
-Layer 3: Multi-Agent Orchestrator
+Layer 3: Multi-Agent Orchestrator — v2.0
 Coordinates the 6 specialized agents using a LangGraph StateGraph pipeline:
 Parser → Classifier → Escalation Gate → Translator → Reviewer → Tester → Documentation → Validation
+v2.0: Produces all 8 mandatory output artifacts including migration report,
+validation report, metadata, lineage, DDL, and full test harness.
 """
 
 from __future__ import annotations
@@ -20,6 +22,7 @@ from src.layer3_agents.translator_agent import TranslatorAgent
 from src.layer3_agents.reviewer_agent import ReviewerAgent
 from src.layer3_agents.tester_agent import TesterAgent
 from src.layer3_agents.documentation_agent import DocumentationAgent
+from src.layer3_agents.artifact_generators import ArtifactGenerators
 from src.layer5_validation.validator import Validator
 from src.layer6_human_review.escalation import EscalationHandler
 
@@ -41,6 +44,7 @@ class PipelineState(TypedDict):
     validation: dict
     escalation: dict
     output_files: dict
+    artifact_report: dict   # v2.0: tracks which of the 8 artifacts were generated
     stage_timings: dict
     started_at: str
     completed_at: str
@@ -77,6 +81,7 @@ class PipelineOrchestrator:
         self.reviewer_agent     = ReviewerAgent(self.engine, self.llm)
         self.tester_agent       = TesterAgent(self.engine, self.llm)
         self.documentation_agent = DocumentationAgent(self.engine, self.llm)
+        self.artifact_generators = ArtifactGenerators(self.llm)  # v2.0: 6 new artifacts
 
         # ── Layer 5/6 ──────────────────────────────────────────────────────────
         self.validator       = Validator(self.config)
@@ -183,8 +188,9 @@ class PipelineOrchestrator:
         def validation_node(state: PipelineState) -> dict:
             t0 = time.time()
             logger.info("[Step 8/8] Validator running checks...")
-            validation_result = self.validator.validate(state["documented"])
             output_files = self._list_output_files(state["job_name"], state["dry_run"])
+            # v2.0: pass artifact file paths for QG-12 verification
+            validation_result = self.validator.validate(state["documented"], artifact_files=output_files)
 
             if not state["dry_run"]:
                 if hasattr(self, "github") and self.github:
@@ -279,6 +285,7 @@ class PipelineOrchestrator:
             "validation": {},
             "escalation": {},
             "output_files": {},
+            "artifact_report": {},
             "stage_timings": {},
             "started_at": result["started_at"],
             "completed_at": "",
@@ -339,60 +346,142 @@ class PipelineOrchestrator:
     # ─────────────────────── Output helpers ───────────────────────────────────
 
     def _save_outputs(self, documented: dict, job_name: str) -> None:
-        """Write all generated outputs to disk."""
+        """
+        Write all 8 v2.0 output artifacts to disk:
+          1. <job>_pyspark.py
+          2. <job>_datafusion.json
+          3. <job>_migration_report.json  (NEW v2.0)
+          4. <job>_validation_report.json (NEW v2.0)
+          5. <job>_metadata.json          (NEW v2.0)
+          6. <job>_lineage.json           (NEW v2.0)
+          7. <job>_ddl.sql                (NEW v2.0)
+          8. test_harness_<job>.py + conftest.py (UPGRADED v2.0)
+        """
         safe = self._safe_name(job_name)
-        translation = documented.get("translation", {})
-        tests = documented.get("tests", {})
+        translation   = documented.get("translation", {})
+        tests         = documented.get("tests", {})
         documentation = documented.get("documentation", {})
+        pyspark_code  = translation.get("pyspark", "") or ""
+        datafusion_json = translation.get("datafusion", {})
 
-        # PySpark script
-        if "pyspark" in self.output_formats:
-            pyspark_code = translation.get("pyspark", "")
-            if pyspark_code:
-                out_path = self.output_dir / "pyspark" / f"{safe}.py"
-                out_path.parent.mkdir(parents=True, exist_ok=True)
-                out_path.write_text(pyspark_code, encoding="utf-8")
-                logger.info(f"  → PySpark: {out_path}")
+        reports_dir = self.output_dir / "reports"
+        reports_dir.mkdir(parents=True, exist_ok=True)
 
-        # DataFusion JSON
-        if "datafusion" in self.output_formats:
-            df_json = translation.get("datafusion", {})
-            if df_json:
-                out_path = self.output_dir / "datafusion" / f"{safe}.json"
-                out_path.parent.mkdir(parents=True, exist_ok=True)
-                out_path.write_text(json.dumps(df_json, indent=2, default=str), encoding="utf-8")
-                logger.info(f"  → DataFusion: {out_path}")
+        # ── Artifact 1: PySpark script ─────────────────────────────────────────
+        if "pyspark" in self.output_formats and pyspark_code:
+            out_path = self.output_dir / "pyspark" / f"{safe}.py"
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(pyspark_code, encoding="utf-8")
+            logger.info(f"  → [1/8] PySpark: {out_path}")
 
-        # Test suite
+        # ── Artifact 2: DataFusion JSON ────────────────────────────────────────
+        if "datafusion" in self.output_formats and datafusion_json:
+            out_path = self.output_dir / "datafusion" / f"{safe}.json"
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(json.dumps(datafusion_json, indent=2, default=str), encoding="utf-8")
+            logger.info(f"  → [2/8] DataFusion: {out_path}")
+
+        # ── Artifact 3: Migration Report (NEW v2.0) ────────────────────────────
+        try:
+            migration_report = self.artifact_generators.migration_report(documented)
+            out_path = reports_dir / f"{safe}_migration_report.json"
+            out_path.write_text(migration_report, encoding="utf-8")
+            logger.info(f"  → [3/8] Migration Report: {out_path}")
+        except Exception as e:
+            logger.warning(f"  ⚠ [3/8] Migration report generation failed: {e}")
+
+        # ── Artifact 4: Validation Report JSON (NEW v2.0) ──────────────────────
+        try:
+            validation_report = self.artifact_generators.validation_report(
+                documented, pyspark_code=pyspark_code, datafusion_json=datafusion_json
+            )
+            out_path = reports_dir / f"{safe}_validation_report.json"
+            out_path.write_text(validation_report, encoding="utf-8")
+            logger.info(f"  → [4/8] Validation Report: {out_path}")
+        except Exception as e:
+            logger.warning(f"  ⚠ [4/8] Validation report generation failed: {e}")
+
+        # ── Artifact 5: Metadata JSON (NEW v2.0) ───────────────────────────────
+        try:
+            metadata_json = self.artifact_generators.metadata(documented)
+            out_path = reports_dir / f"{safe}_metadata.json"
+            out_path.write_text(metadata_json, encoding="utf-8")
+            logger.info(f"  → [5/8] Metadata: {out_path}")
+        except Exception as e:
+            logger.warning(f"  ⚠ [5/8] Metadata generation failed: {e}")
+
+        # ── Artifact 6: Lineage JSON (NEW v2.0) ────────────────────────────────
+        try:
+            lineage_json = self.artifact_generators.lineage(documented)
+            out_path = reports_dir / f"{safe}_lineage.json"
+            out_path.write_text(lineage_json, encoding="utf-8")
+            logger.info(f"  → [6/8] Lineage: {out_path}")
+        except Exception as e:
+            logger.warning(f"  ⚠ [6/8] Lineage generation failed: {e}")
+
+        # ── Artifact 7: DDL SQL (NEW v2.0) ─────────────────────────────────────
+        try:
+            ddl_sql = self.artifact_generators.ddl(documented)
+            out_path = reports_dir / f"{safe}_ddl.sql"
+            out_path.write_text(ddl_sql, encoding="utf-8")
+            logger.info(f"  → [7/8] DDL: {out_path}")
+        except Exception as e:
+            logger.warning(f"  ⚠ [7/8] DDL generation failed: {e}")
+
+        # ── Artifact 8: Test Harness (UPGRADED v2.0) ───────────────────────────
+        try:
+            harness = self.artifact_generators.test_harness(documented, pyspark_code=pyspark_code)
+            tests_dir = Path("tests")
+            tests_dir.mkdir(parents=True, exist_ok=True)
+
+            conftest_path = tests_dir / "conftest.py"
+            # Only write conftest.py if it doesn't already exist (shared fixture)
+            if not conftest_path.exists() and harness.get("conftest"):
+                conftest_path.write_text(harness["conftest"], encoding="utf-8")
+                logger.info(f"  → [8/8] conftest.py: {conftest_path}")
+
+            harness_path = tests_dir / f"test_harness_{safe}.py"
+            harness_path.write_text(harness.get("test_harness", ""), encoding="utf-8")
+            logger.info(f"  → [8/8] Test Harness: {harness_path}")
+        except Exception as e:
+            logger.warning(f"  ⚠ [8/8] Test harness generation failed: {e}")
+
+        # ── Legacy test code from TesterAgent (kept for backward compat) ───────
         test_code = tests.get("test_code", "")
+        conftest_code = tests.get("conftest_code", "")
         if test_code:
             out_path = Path("tests") / f"test_{safe}.py"
-            out_path.parent.mkdir(parents=True, exist_ok=True)
             out_path.write_text(test_code, encoding="utf-8")
-            logger.info(f"  → Tests: {out_path}")
 
-        # Migration documentation
+        # ── Migration documentation ────────────────────────────────────────────
         doc_md = documentation.get("markdown", "")
         if doc_md:
-            out_path = self.output_dir / "reports" / f"{safe}_migration_doc.md"
-            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path = reports_dir / f"{safe}_migration_doc.md"
             out_path.write_text(doc_md, encoding="utf-8")
             logger.info(f"  → Docs: {out_path}")
 
-        # Full parsed JSON (for debugging / audit)
-        parsed_out = self.output_dir / "reports" / f"{safe}_parsed.json"
+        # ── Full parsed JSON (debug / audit) ──────────────────────────────────
+        parsed_out = reports_dir / f"{safe}_parsed.json"
         parsed_out.write_text(
             json.dumps({k: v for k, v in documented.items() if k != "translation"}, indent=2, default=str),
             encoding="utf-8",
         )
 
     def _list_output_files(self, job_name: str, dry_run: bool) -> dict[str, str]:
+        """Return paths for all 8 v2.0 output artifacts."""
         safe = self._safe_name(job_name)
+        reports = self.output_dir / "reports"
         return {
-            "pyspark": str(self.output_dir / "pyspark" / f"{safe}.py"),
-            "datafusion": str(self.output_dir / "datafusion" / f"{safe}.json"),
-            "tests": str(Path("tests") / f"test_{safe}.py"),
-            "docs": str(self.output_dir / "reports" / f"{safe}_migration_doc.md"),
+            "pyspark":            str(self.output_dir / "pyspark" / f"{safe}.py"),
+            "datafusion":         str(self.output_dir / "datafusion" / f"{safe}.json"),
+            "migration_report":   str(reports / f"{safe}_migration_report.json"),
+            "validation_report":  str(reports / f"{safe}_validation_report.json"),
+            "metadata":           str(reports / f"{safe}_metadata.json"),
+            "lineage":            str(reports / f"{safe}_lineage.json"),
+            "ddl":                str(reports / f"{safe}_ddl.sql"),
+            "test_harness":       str(Path("tests") / f"test_harness_{safe}.py"),
+            "conftest":           str(Path("tests") / "conftest.py"),
+            "docs":               str(reports / f"{safe}_migration_doc.md"),
         }
 
     def _safe_name(self, name: str) -> str:

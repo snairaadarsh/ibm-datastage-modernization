@@ -21,9 +21,10 @@ class Validator:
     def __init__(self, config: dict | None = None):
         self.config = config or {}
 
-    def validate(self, documented_job: dict) -> dict:
+    def validate(self, documented_job: dict, artifact_files: dict | None = None) -> dict:
         """
         Run all validation checks on the documented job.
+        artifact_files: dict mapping artifact type → path (used for QG-12 check).
         Returns a validation report dict.
         """
         job_name = documented_job.get("job_name", "?")
