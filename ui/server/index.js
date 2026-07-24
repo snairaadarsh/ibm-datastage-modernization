@@ -3,12 +3,15 @@
  * Handles file uploads, job orchestration, WebSocket events, and file downloads.
  */
 
+require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+
 
 const uploadRoutes   = require('./routes/upload');
 const jobRoutes      = require('./routes/jobs');

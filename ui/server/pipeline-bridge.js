@@ -24,7 +24,22 @@ const PROJECT_ROOT = path.join(__dirname, '../../');
  * Streams JSON events from stdout → Socket.io.
  */
 function runPipeline(jobId, filePath, io, providerConfig = {}) {
-  const { provider = 'gemini', apiKey = '', model = '' } = providerConfig;
+  const { provider = 'gemini', apiKey: rawApiKey = '', model = '' } = providerConfig;
+
+  // Resolve the API key: if client sent 'env', read from server environment variables
+  let resolvedApiKey = rawApiKey;
+  if (!rawApiKey || rawApiKey === 'env') {
+    const envKeyMap = {
+      gemini:    process.env.GEMINI_API_KEY    || process.env.LLM_API_KEY || '',
+      openai:    process.env.OPENAI_API_KEY    || process.env.LLM_API_KEY || '',
+      anthropic: process.env.ANTHROPIC_API_KEY || process.env.LLM_API_KEY || '',
+    };
+    resolvedApiKey = envKeyMap[provider] || process.env.LLM_API_KEY || '';
+    console.log(`[Bridge] Using API key from .env for provider: ${provider}`);
+  }
+
+  const apiKey = resolvedApiKey;
+
   const job = getJob(jobId);
   if (!job) { console.error(`[Bridge] Job ${jobId} not found`); return; }
 

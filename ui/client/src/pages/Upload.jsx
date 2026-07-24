@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Zap, Settings, FileCode, CheckSquare, ChevronRight,
-  Key, MessageSquare, Brain, ChevronDown,
+  Key, MessageSquare, Brain,
 } from 'lucide-react'
 import FileDropzone from '../components/FileDropzone.jsx'
 import { api } from '../lib/api.js'
@@ -27,24 +27,9 @@ const PROVIDERS = {
 }
 
 const LLM_OPTIONS = [
-  {
-    provider: 'gemini',
-    label:    'Google Gemini',
-    models:   ['gemini-1.5-pro', 'gemini-2.0-flash', 'gemini-2.5-pro'],
-    color:    '#4285F4',
-  },
-  {
-    provider: 'openai',
-    label:    'OpenAI',
-    models:   ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'],
-    color:    '#10A37F',
-  },
-  {
-    provider: 'anthropic',
-    label:    'Anthropic',
-    models:   ['claude-sonnet-4-5', 'claude-opus-4', 'claude-haiku-3-5'],
-    color:    '#D97706',
-  },
+  { provider: 'gemini',    label: 'Google Gemini', color: '#4285F4' },
+  { provider: 'openai',    label: 'OpenAI',        color: '#10A37F' },
+  { provider: 'anthropic', label: 'Anthropic',     color: '#D97706' },
 ]
 
 const OUTPUT_OPTIONS = [
@@ -64,31 +49,17 @@ export default function Upload() {
   // LLM provider state
   const [providerMode, setProviderMode] = useState('apikey') // 'apikey' | 'ag_chat'
   const [llmProvider,  setLlmProvider]  = useState('gemini')
-  const [apiKey,       setApiKey]       = useState('')
-  const [selectedModel,setSelectedModel]= useState('gemini-1.5-pro')
-  const [showApiKey,   setShowApiKey]   = useState(false)
 
   const toggleOutput = (id) => setOutputs(o => ({ ...o, [id]: !o[id] }))
 
-  const currentLlm = LLM_OPTIONS.find(o => o.provider === llmProvider) || LLM_OPTIONS[0]
-
-  const handleLlmProviderChange = (provider) => {
-    setLlmProvider(provider)
-    const opt = LLM_OPTIONS.find(o => o.provider === provider)
-    if (opt) setSelectedModel(opt.models[0])
-  }
-
   const handleStart = async () => {
     if (!file) { setError('Please select a file to migrate'); return }
-    if (providerMode === 'apikey' && !apiKey.trim()) {
-      setError('Please enter your API key'); return
-    }
     setError(null)
     setLoading(true)
     try {
       const providerConfig = providerMode === 'ag_chat'
         ? { provider: 'ag_chat', apiKey: '', model: '' }
-        : { provider: llmProvider, apiKey: apiKey.trim(), model: selectedModel }
+        : { provider: llmProvider, apiKey: 'env', model: 'gemini-2.5-pro' }
 
       const { jobId } = await api.uploadFile(file, providerConfig)
       navigate(`/pipeline/${jobId}`)
@@ -98,7 +69,7 @@ export default function Upload() {
     }
   }
 
-  const canStart = file && (providerMode === 'ag_chat' || apiKey.trim())
+  const canStart = !!file
 
   return (
     <motion.div
@@ -186,7 +157,7 @@ export default function Upload() {
                         {LLM_OPTIONS.map(opt => (
                           <button
                             key={opt.provider}
-                            onClick={() => handleLlmProviderChange(opt.provider)}
+                            onClick={() => setLlmProvider(opt.provider)}
                             style={{
                               flex: 1, padding: '9px 12px', borderRadius: 'var(--radius-sm)',
                               border: `1.5px solid ${llmProvider === opt.provider ? opt.color : 'var(--border)'}`,
@@ -201,58 +172,15 @@ export default function Upload() {
                       </div>
                     </div>
 
-                    {/* Model selector */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                        Model
-                      </label>
-                      <div style={{ position: 'relative' }}>
-                        <select
-                          value={selectedModel}
-                          onChange={e => setSelectedModel(e.target.value)}
-                          style={{
-                            width: '100%', padding: '10px 36px 10px 14px',
-                            background: 'var(--bg-input)', border: '1px solid var(--border)',
-                            borderRadius: 'var(--radius)', color: 'var(--text)',
-                            fontSize: 13, appearance: 'none', cursor: 'pointer', outline: 'none',
-                          }}
-                        >
-                          {currentLlm.models.map(m => (
-                            <option key={m} value={m}>{m}</option>
-                          ))}
-                        </select>
-                        <ChevronDown size={14} color="var(--text-dim)" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-                      </div>
-                    </div>
-
-                    {/* API Key */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                        API Key
-                      </label>
-                      <div style={{ position: 'relative' }}>
-                        <input
-                          type={showApiKey ? 'text' : 'password'}
-                          className="input"
-                          placeholder={`Enter your ${currentLlm.label} API key...`}
-                          value={apiKey}
-                          onChange={e => setApiKey(e.target.value)}
-                          style={{ paddingRight: 80, fontFamily: apiKey ? 'var(--font-mono)' : 'inherit', fontSize: 13 }}
-                        />
-                        <button
-                          onClick={() => setShowApiKey(v => !v)}
-                          style={{
-                            position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-                            background: 'none', border: 'none', cursor: 'pointer',
-                            fontSize: 11, fontWeight: 600, color: 'var(--text-muted)',
-                            fontFamily: 'var(--font)',
-                          }}
-                        >
-                          {showApiKey ? 'Hide' : 'Show'}
-                        </button>
-                      </div>
-                      <p style={{ fontSize: 11, color: 'var(--text-dim)', margin: 0 }}>
-                        Your key is sent directly to the pipeline and never stored.
+                    {/* .env key notice */}
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '10px 14px', borderRadius: 'var(--radius-sm)',
+                      background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.18)',
+                    }}>
+                      <Key size={14} color="var(--primary)" style={{ flexShrink: 0 }} />
+                      <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+                        API key is read from <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--primary-bright)', fontSize: 11 }}>.env</code> on the server. No key entry needed.
                       </p>
                     </div>
                   </motion.div>
@@ -285,8 +213,8 @@ export default function Upload() {
                           Antigravity IDE Agent
                         </div>
                         <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
-                          Each agent prompt is automatically processed by the Antigravity IDE agent 
-                          in the background. A draggable floating brain widget in the corner of your screen 
+                          Each agent prompt is automatically processed by the Antigravity IDE agent
+                          in the background. A draggable floating brain widget in the corner of your screen
                           will show you which agent is currently executing.
                         </p>
                         <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
@@ -349,12 +277,12 @@ export default function Upload() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {[
-                  { name: 'Parser Agent',       desc: 'XML parse + normalize',     color: '#ef4444' },
-                  { name: 'Classifier Agent',   desc: 'Complexity & confidence',   color: '#f59e0b' },
-                  { name: 'Translator Agent',   desc: 'PySpark + DataFusion code', color: '#3b82f6' },
-                  { name: 'Reviewer Agent',     desc: 'Code review & best practices', color: '#8b5cf6' },
-                  { name: 'Tester Agent',       desc: 'pytest suite generation',   color: '#10b981' },
-                  { name: 'Documentation Agent',desc: 'Migration docs + report',   color: '#06b6d4' },
+                  { name: 'Parser Agent',        desc: 'XML parse + normalize',        color: '#ef4444' },
+                  { name: 'Classifier Agent',    desc: 'Complexity & confidence',      color: '#f59e0b' },
+                  { name: 'Translator Agent',    desc: 'PySpark + DataFusion code',    color: '#3b82f6' },
+                  { name: 'Reviewer Agent',      desc: 'Code review & best practices', color: '#8b5cf6' },
+                  { name: 'Tester Agent',        desc: 'pytest suite generation',      color: '#10b981' },
+                  { name: 'Documentation Agent', desc: 'Migration docs + report',      color: '#06b6d4' },
                 ].map((a, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: a.color, flexShrink: 0 }} />
@@ -383,7 +311,7 @@ export default function Upload() {
 
             {!canStart && !loading && (
               <p style={{ fontSize: 11, color: 'var(--text-dim)', textAlign: 'center', marginTop: -8 }}>
-                {!file ? 'Upload a .dsx or .isx file to continue' : 'Enter your API key to continue'}
+                Upload a .dsx or .isx file to continue
               </p>
             )}
           </div>
