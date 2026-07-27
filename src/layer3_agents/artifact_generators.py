@@ -508,23 +508,23 @@ class ArtifactGenerators:
 
         stage_lines = []
         for s in stages:
-            sid    = s.get("id", "")
-            stype  = s.get("stage_type", "")
-            cat    = s.get("category", "")
-            cols   = [c.get("name", "") for c in s.get("output_columns", [])[:8]]
-            txf    = [(t.get("output_column", ""), t.get("expression", "")) for t in s.get("transformations", [])[:6]]
-            jtype  = s.get("join_type", "")
-            jkey   = s.get("join_key", "")
-            sql    = s.get("sql_query", "")[:200]
-            lkup   = s.get("lookup_key", "")
-            grp    = s.get("group_by_keys", "")
-            agg    = s.get("aggregations", "")
-            wmode  = s.get("write_mode", "")
-            bqp    = s.get("bq_project", "")
-            bqd    = s.get("bq_dataset", "")
-            tbl    = s.get("table_name", "")
-            conn   = s.get("connection_name", "")
-            fp     = s.get("file_path", "")
+            sid    = s.get("id") or ""
+            stype  = s.get("stage_type") or ""
+            cat    = s.get("category") or ""
+            cols   = [c.get("name", "") for c in (s.get("output_columns") or [])[:8]]
+            txf    = [(t.get("output_column", ""), t.get("expression", "")) for t in (s.get("transformations") or [])[:6]]
+            jtype  = s.get("join_type") or ""
+            jkey   = s.get("join_key") or ""
+            sql    = (s.get("sql_query") or "")[:200]
+            lkup   = s.get("lookup_key") or ""
+            grp    = s.get("group_by_keys") or ""
+            agg    = s.get("aggregations") or ""
+            wmode  = s.get("write_mode") or ""
+            bqp    = s.get("bq_project") or ""
+            bqd    = s.get("bq_dataset") or ""
+            tbl    = s.get("table_name") or ""
+            conn   = s.get("connection_name") or ""
+            fp     = s.get("file_path") or ""
 
             line = f"[{sid}] type={stype} cat={cat}"
             if cols:

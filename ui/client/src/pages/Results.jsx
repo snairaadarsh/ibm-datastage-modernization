@@ -1,15 +1,20 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Download, Package, CheckCircle, FileCode, FileJson, TestTube, FileText, Clock, BarChart2, ArrowLeft, Copy, Check } from 'lucide-react'
+import { Download, Package, CheckCircle, FileCode, FileJson, TestTube, FileText, Clock, BarChart2, ArrowLeft, Copy, Check, Database, GitBranch, Table, FlaskConical, Shield, Activity } from 'lucide-react'
 import CodeViewer from '../components/CodeViewer.jsx'
 import { api } from '../lib/api.js'
 
 const TABS = [
-  { id: 'pyspark',    label: 'PySpark',          icon: FileCode,  lang: 'python',     color: 'var(--primary)' },
-  { id: 'datafusion', label: 'DataFusion JSON',  icon: FileJson,  lang: 'json',       color: 'var(--accent)' },
-  { id: 'tests',      label: 'Unit Tests',       icon: TestTube,  lang: 'python',     color: 'var(--success)' },
-  { id: 'report',     label: 'Migration Report', icon: FileText,  lang: 'json',       color: 'var(--purple)' },
+  { id: 'pyspark',           label: 'PySpark',           icon: FileCode,    lang: 'python',  color: 'var(--primary)' },
+  { id: 'datafusion',        label: 'DataFusion JSON',   icon: FileJson,    lang: 'json',    color: 'var(--accent)' },
+  { id: 'tests',             label: 'Unit Tests',        icon: TestTube,    lang: 'python',  color: 'var(--success)' },
+  { id: 'report',            label: 'Migration Report',  icon: FileText,    lang: 'json',    color: 'var(--purple)' },
+  { id: 'validation_report', label: 'Validation Report', icon: Shield,      lang: 'json',    color: '#f59e0b' },
+  { id: 'metadata',          label: 'Metadata Catalog',  icon: Database,    lang: 'json',    color: '#06b6d4' },
+  { id: 'lineage',           label: 'Data Lineage',      icon: GitBranch,   lang: 'json',    color: '#a78bfa' },
+  { id: 'ddl',               label: 'DDL Statements',    icon: Table,       lang: 'sql',     color: '#fb7185' },
+  { id: 'test_harness',      label: 'Test Harness',      icon: FlaskConical, lang: 'python', color: '#34d399' },
 ]
 
 export default function Results() {
@@ -48,6 +53,9 @@ export default function Results() {
   const code = job.outputs?.[activeTab] || ''
   const report = job.outputs?.report ? JSON.parse(job.outputs.report) : null
 
+  // Count available artifacts
+  const availableCount = TABS.filter(t => job.outputs?.[t.id]).length
+
   const handleCopy = async () => {
     await navigator.clipboard.writeText(code)
     setCopied(true)
@@ -67,9 +75,11 @@ export default function Results() {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32 }}>
           <div>
-            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/dashboard')} style={{ marginBottom: 12, gap: 6, padding: '6px 12px' }}>
-              <ArrowLeft size={13} /> Back to Dashboard
-            </button>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => navigate('/dashboard')} style={{ gap: 6, padding: '6px 12px' }}>
+                <ArrowLeft size={13} /> Back to Dashboard
+              </button>
+            </div>
             <div className="section-label">Migration Complete</div>
             <h1 style={{ fontSize: 28, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 10 }}>
               <CheckCircle size={24} color="var(--success)" />
@@ -77,8 +87,17 @@ export default function Results() {
             </h1>
           </div>
 
-          {/* Download all */}
+          {/* Header Action Buttons */}
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => navigate(`/pipeline/${jobId}`)}
+              style={{ gap: 6, padding: '8px 14px', border: '1px solid var(--border)' }}
+              title="View pipeline graph and agent activity logs"
+            >
+              <Activity size={15} color="var(--primary)" />
+              View Pipeline Graph
+            </button>
             <button
               className="btn btn-secondary"
               onClick={() => api.downloadFile(jobId, 'zip')}
@@ -96,7 +115,7 @@ export default function Results() {
             { label: 'Complexity', value: report?.summary?.complexity || job.classification?.complexity || '—', color: 'var(--primary)' },
             { label: 'Confidence', value: `${report?.summary?.confidenceScore?.toFixed(1) || job.classification?.confidenceScore?.toFixed(1) || '—'}%`, color: 'var(--success)' },
             { label: 'Time Elapsed', value: `${report?.summary?.elapsedSeconds || job.elapsedSeconds || '—'}s`, color: 'var(--accent)' },
-            { label: 'Lines Generated', value: Object.values(report?.summary?.linesGenerated || {}).reduce((a, b) => a + b, 0) || '376+', color: 'var(--purple)' },
+            { label: 'Artifacts Generated', value: `${availableCount} / ${TABS.length}`, color: 'var(--purple)' },
           ].map((card, i) => (
             <motion.div
               key={i}
@@ -112,23 +131,51 @@ export default function Results() {
           ))}
         </div>
 
-        {/* Tab nav + Download */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div className="tabs" style={{ flex: 'none' }}>
-            {TABS.map(t => (
-              <button
-                key={t.id}
-                className={`tab ${activeTab === t.id ? 'active' : ''}`}
-                onClick={() => setActiveTab(t.id)}
-                style={{ gap: 6 }}
-              >
-                <t.icon size={13} style={{ color: activeTab === t.id ? t.color : 'inherit' }} />
-                {t.label}
-              </button>
-            ))}
+        {/* Tab nav + actions — scrollable for all 9 tabs */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 12 }}>
+          <div
+            className="tabs"
+            style={{
+              flex: 1,
+              overflowX: 'auto',
+              whiteSpace: 'nowrap',
+              scrollbarWidth: 'thin',
+              msOverflowStyle: 'none',
+              paddingBottom: 2,
+            }}
+          >
+            {TABS.map(t => {
+              const hasContent = !!job.outputs?.[t.id]
+              return (
+                <button
+                  key={t.id}
+                  className={`tab ${activeTab === t.id ? 'active' : ''}`}
+                  onClick={() => setActiveTab(t.id)}
+                  style={{
+                    gap: 5,
+                    opacity: hasContent ? 1 : 0.4,
+                    fontSize: 12,
+                    padding: '8px 12px',
+                    flexShrink: 0,
+                    position: 'relative',
+                  }}
+                  title={hasContent ? t.label : `${t.label} — not generated`}
+                >
+                  <t.icon size={12} style={{ color: activeTab === t.id ? t.color : 'inherit' }} />
+                  {t.label}
+                  {hasContent && (
+                    <span style={{
+                      width: 5, height: 5, borderRadius: '50%',
+                      background: t.color, display: 'inline-block',
+                      marginLeft: 2, flexShrink: 0,
+                    }} />
+                  )}
+                </button>
+              )
+            })}
           </div>
 
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
             <button className="btn btn-secondary btn-sm" onClick={handleCopy} style={{ gap: 6 }}>
               {copied ? <Check size={13} color="var(--success)" /> : <Copy size={13} />}
               {copied ? 'Copied!' : 'Copy'}
@@ -140,22 +187,61 @@ export default function Results() {
           </div>
         </div>
 
-        {/* Code viewer */}
+        {/* Code viewer — used for most tabs */}
         {activeTab !== 'report' ? (
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={{ height: 600, borderRadius: 'var(--radius)', overflow: 'hidden' }}
-          >
-            <CodeViewer
-              code={code}
-              language={activeTabCfg.lang}
-              onDownload={() => api.downloadFile(jobId, activeTab)}
-            />
-          </motion.div>
+          code ? (
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{ borderRadius: 'var(--radius)', overflow: 'hidden' }}
+            >
+              {/* Line count badge */}
+              <div style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '8px 16px',
+                background: 'rgba(255,255,255,0.02)',
+                borderBottom: '1px solid var(--border)',
+                borderRadius: 'var(--radius) var(--radius) 0 0',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {activeTabCfg && <activeTabCfg.icon size={14} style={{ color: activeTabCfg.color }} />}
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{activeTabCfg?.label}</span>
+                  <span style={{
+                    fontSize: 11, color: 'var(--text-muted)',
+                    background: 'rgba(255,255,255,0.04)', padding: '2px 8px',
+                    borderRadius: 20, border: '1px solid var(--border)',
+                  }}>
+                    {lineCount(code)} lines
+                  </span>
+                </div>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  {activeTabCfg?.lang}
+                </span>
+              </div>
+              <div style={{ height: 560 }}>
+                <CodeViewer
+                  code={code}
+                  language={activeTabCfg?.lang || 'text'}
+                  onDownload={() => api.downloadFile(jobId, activeTab)}
+                />
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass-card"
+              style={{ padding: '48px 24px', textAlign: 'center' }}
+            >
+              <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>
+                This artifact was not generated for this job.
+              </div>
+            </motion.div>
+          )
         ) : (
-          // Report viewer
+          // Report viewer — rich formatted view
           report ? (
             <motion.div
               key="report"
@@ -220,6 +306,42 @@ export default function Results() {
             </motion.div>
           ) : null
         )}
+
+        {/* Artifact inventory footer */}
+        <div style={{
+          marginTop: 24, padding: '16px 20px',
+          background: 'rgba(255,255,255,0.02)',
+          borderRadius: 'var(--radius)',
+          border: '1px solid var(--border)',
+        }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Generated Artifacts ({availableCount}/{TABS.length})
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {TABS.map(t => {
+              const has = !!job.outputs?.[t.id]
+              return (
+                <div
+                  key={t.id}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 5,
+                    padding: '4px 10px', borderRadius: 20,
+                    fontSize: 11, fontWeight: 600,
+                    background: has ? `${t.color}15` : 'rgba(255,255,255,0.02)',
+                    color: has ? t.color : 'var(--text-muted)',
+                    border: `1px solid ${has ? `${t.color}30` : 'var(--border)'}`,
+                    opacity: has ? 1 : 0.5,
+                    cursor: has ? 'pointer' : 'default',
+                  }}
+                  onClick={() => has && setActiveTab(t.id)}
+                >
+                  {has ? <CheckCircle size={10} /> : <span style={{ width: 10, height: 10, borderRadius: '50%', border: '1.5px solid currentColor', display: 'inline-block' }} />}
+                  {t.label}
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </div>
     </motion.div>
   )

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Clock, FileCode, BarChart2, Activity, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Clock, FileCode, BarChart2, Activity, AlertTriangle, CheckCircle, ArrowLeft, ArrowRight } from 'lucide-react'
 import PipelineGraph from '../components/PipelineGraph.jsx'
 import socket, { subscribeToJob, unsubscribeFromJob } from '../lib/socket.js'
 import { api } from '../lib/api.js'
@@ -116,6 +116,16 @@ export default function Pipeline() {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 40 }}>
           <div>
+            <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => navigate('/dashboard')} style={{ gap: 6, padding: '6px 12px' }}>
+                <ArrowLeft size={13} /> Back to Dashboard
+              </button>
+              {status === 'completed' && (
+                <button className="btn btn-primary btn-sm" onClick={() => navigate(`/results/${jobId}`)} style={{ gap: 6, padding: '6px 12px' }}>
+                  View Results & Artifacts <ArrowRight size={13} />
+                </button>
+              )}
+            </div>
             <div className="section-label">Pipeline Execution</div>
             <h1 style={{ fontSize: 28, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 12 }}>
               <FileCode size={24} color="var(--primary)" />

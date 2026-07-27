@@ -141,7 +141,14 @@ export default function Dashboard() {
                     const displayScore = score != null ? (score <= 1 ? score * 100 : score) : null
 
                     return (
-                      <tr key={job.id} style={{ cursor: job.status === 'completed' ? 'pointer' : 'default' }}>
+                      <tr
+                        key={job.id}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => {
+                          if (job.status === 'completed') navigate(`/results/${job.id}`)
+                          else navigate(`/pipeline/${job.id}`)
+                        }}
+                      >
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -177,11 +184,21 @@ export default function Dashboard() {
                         <td><span style={{ fontSize: 12, color: 'var(--text-dim)' }}>{timeAgo(job.createdAt)}</span></td>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
+                            {/* Pipeline view — available for ALL statuses */}
+                            <button
+                              className="btn btn-ghost btn-icon"
+                              onClick={(e) => { e.stopPropagation(); navigate(`/pipeline/${job.id}`) }}
+                              title="View pipeline stages & logs"
+                              style={{ color: job.status === 'failed' ? 'var(--error)' : 'var(--primary)' }}
+                            >
+                              <Activity size={14} />
+                            </button>
+                            {/* Results view — only for completed jobs */}
                             {job.status === 'completed' && (
                               <button
                                 className="btn btn-ghost btn-icon"
-                                onClick={() => navigate(`/results/${job.id}`)}
-                                title="View results"
+                                onClick={(e) => { e.stopPropagation(); navigate(`/results/${job.id}`) }}
+                                title="View results & artifacts"
                               >
                                 <ArrowRight size={14} />
                               </button>

@@ -481,15 +481,80 @@ def run_server_mode(args) -> None:
             "recommendations": state["documented"].get("documentation", {}).get("recommendations", []),
         }
 
-        emit("log",  {"level": "success", "message": f"Pipeline complete in {elapsed}s"})
+        # ── Generate all 6 v2.0 artifacts via ArtifactGenerators ──────────────
+        emit("log", {"level": "info", "message": "Generating v2.0 artifacts (migration report, validation report, metadata, lineage, DDL, test harness)..."})
+        from src.layer3_agents.artifact_generators import ArtifactGenerators
+        import traceback
+        art_gen = ArtifactGenerators(llm)
+        documented = state["documented"]
+
+        migration_report_json = ""
+        try:
+            migration_report_json = art_gen.migration_report(documented)
+            emit("log", {"level": "success", "message": f"Migration report generated ({len(migration_report_json)} chars)"})
+        except Exception as e:
+            emit("log", {"level": "warning", "message": f"Migration report generation failed: {e}"})
+            logger.error(f"[ArtifactGen] migration_report error: {traceback.format_exc()}")
+
+        validation_report_json = ""
+        try:
+            validation_report_json = art_gen.validation_report(documented, pyspark_code=pyspark_code, datafusion_json=datafusion_cfg)
+            emit("log", {"level": "success", "message": f"Validation report generated ({len(validation_report_json)} chars)"})
+        except Exception as e:
+            emit("log", {"level": "warning", "message": f"Validation report generation failed: {e}"})
+            logger.error(f"[ArtifactGen] validation_report error: {traceback.format_exc()}")
+
+        metadata_json = ""
+        try:
+            metadata_json = art_gen.metadata(documented)
+            emit("log", {"level": "success", "message": f"Metadata catalog generated ({len(metadata_json)} chars)"})
+        except Exception as e:
+            emit("log", {"level": "warning", "message": f"Metadata generation failed: {e}"})
+            logger.error(f"[ArtifactGen] metadata error: {traceback.format_exc()}")
+
+        lineage_json = ""
+        try:
+            lineage_json = art_gen.lineage(documented)
+            emit("log", {"level": "success", "message": f"Data lineage graph generated ({len(lineage_json)} chars)"})
+        except Exception as e:
+            emit("log", {"level": "warning", "message": f"Lineage generation failed: {e}"})
+            logger.error(f"[ArtifactGen] lineage error: {traceback.format_exc()}")
+
+        ddl_sql = ""
+        try:
+            ddl_sql = art_gen.ddl(documented)
+            emit("log", {"level": "success", "message": f"DDL statements generated ({len(ddl_sql)} chars)"})
+        except Exception as e:
+            emit("log", {"level": "warning", "message": f"DDL generation failed: {e}"})
+            logger.error(f"[ArtifactGen] ddl error: {traceback.format_exc()}")
+
+        test_harness_code = ""
+        try:
+            harness = art_gen.test_harness(documented, pyspark_code=pyspark_code)
+            # Combine conftest + test harness into one output for the UI
+            conftest_part = harness.get("conftest", "")
+            harness_part = harness.get("test_harness", "")
+            test_harness_code = f"# === conftest.py ===\n{conftest_part}\n\n# === test_harness.py ===\n{harness_part}"
+            emit("log", {"level": "success", "message": f"Test harness (pytest) generated ({len(test_harness_code)} chars)"})
+        except Exception as e:
+            emit("log", {"level": "warning", "message": f"Test harness generation failed: {e}"})
+            logger.error(f"[ArtifactGen] test_harness error: {traceback.format_exc()}")
+
+        emit("log",  {"level": "success", "message": f"All artifacts generated — pipeline complete in {elapsed}s"})
         emit("stage", {"stageId": "report", "status": "done"})
 
         emit("completed", {
-            "pyspark":        pyspark_code,
-            "datafusion":     datafusion_str,
-            "tests":          test_code,
-            "report":         json.dumps(report, indent=2, default=str),
-            "elapsedSeconds": elapsed,
+            "pyspark":           pyspark_code,
+            "datafusion":        datafusion_str,
+            "tests":             test_code,
+            "report":            json.dumps(report, indent=2, default=str),
+            "migration_report":  migration_report_json,
+            "validation_report": validation_report_json,
+            "metadata":          metadata_json,
+            "lineage":           lineage_json,
+            "ddl":               ddl_sql,
+            "test_harness":      test_harness_code,
+            "elapsedSeconds":    elapsed,
         })
         return {"status": "completed"}
 

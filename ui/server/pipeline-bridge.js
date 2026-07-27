@@ -220,16 +220,32 @@ function handlePipelineEvent(msg, jobId, io, emit, log) {
     }
 
     case 'completed': {
-      const { pyspark, datafusion, tests, report, elapsedSeconds } = msg;
+      const {
+        pyspark, datafusion, tests, report,
+        migration_report, validation_report, metadata, lineage, ddl, test_harness,
+        elapsedSeconds
+      } = msg;
       updateJob(jobId, {
         status: 'completed',
-        outputs: { pyspark, datafusion, tests, report },
+        outputs: {
+          pyspark, datafusion, tests, report,
+          migration_report:  migration_report  || '',
+          validation_report: validation_report || '',
+          metadata:          metadata          || '',
+          lineage:           lineage           || '',
+          ddl:               ddl               || '',
+          test_harness:      test_harness      || '',
+        },
         elapsedSeconds: elapsedSeconds || 0,
       });
       emit('pipeline:completed', {
         jobId,
         status: 'completed',
-        outputs: { pyspark: !!pyspark, datafusion: !!datafusion, tests: !!tests, report: !!report },
+        outputs: {
+          pyspark: !!pyspark, datafusion: !!datafusion, tests: !!tests, report: !!report,
+          migration_report: !!migration_report, validation_report: !!validation_report,
+          metadata: !!metadata, lineage: !!lineage, ddl: !!ddl, test_harness: !!test_harness,
+        },
         elapsedSeconds,
         report: report ? JSON.parse(report) : null,
       });
