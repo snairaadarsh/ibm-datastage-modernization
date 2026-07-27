@@ -169,8 +169,9 @@ class ReviewerAgent:
         }
 
         df_str          = json.dumps(datafusion_json, indent=2) if isinstance(datafusion_json, dict) else str(datafusion_json)
-        pyspark_preview = pyspark_code[:7000]
-        df_preview      = df_str[:3500]
+        # Send full code to LLM — relies on large context window models (Gemini, Claude)
+        pyspark_preview = pyspark_code
+        df_preview      = df_str
         risk_areas      = cls.get("risk_areas", [])
         ambiguity       = cls.get("ambiguity_flags", [])
 

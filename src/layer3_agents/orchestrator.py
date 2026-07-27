@@ -23,8 +23,8 @@ from src.layer3_agents.reviewer_agent import ReviewerAgent
 from src.layer3_agents.tester_agent import TesterAgent
 from src.layer3_agents.documentation_agent import DocumentationAgent
 from src.layer3_agents.artifact_generators import ArtifactGenerators
-from src.layer5_validation.validator import Validator
-from src.layer6_human_review.escalation import EscalationHandler
+from src.layer4_validation.validator import Validator
+from src.layer5_human_review.escalation import EscalationHandler
 
 logger = logging.getLogger(__name__)
 
@@ -83,9 +83,9 @@ class PipelineOrchestrator:
         self.documentation_agent = DocumentationAgent(self.engine, self.llm)
         self.artifact_generators = ArtifactGenerators(self.llm)  # v2.0: 6 new artifacts
 
-        # ── Layer 5/6 ──────────────────────────────────────────────────────────
+        # ── Layer 4/5 ──────────────────────────────────────────────────────────
         self.validator       = Validator(self.config)
-        self.escalation      = EscalationHandler(self.config)
+        self.escalation      = EscalationHandler(self.config, llm=self.llm)
 
         # ── LangGraph Compilation ──────────────────────────────────────────────
         from langgraph.graph import StateGraph, END
@@ -95,7 +95,7 @@ class PipelineOrchestrator:
         # 1. Parse node
         def parse_node(state: PipelineState) -> dict:
             t0 = time.time()
-            logger.info("[Step 1/8] Parsing DataStage XML...")
+            logger.info("[Step 1/9] Parsing DataStage XML...")
             parser = DataStageParser(state["source_file"])
             raw = parser.parse()
             return {
@@ -106,7 +106,7 @@ class PipelineOrchestrator:
         # 2. Normalize node
         def normalize_node(state: PipelineState) -> dict:
             t0 = time.time()
-            logger.info("[Step 2/8] Parser Agent normalizing structure...")
+            logger.info("[Step 2/9] Parser Agent normalizing structure...")
             normalized = self.parser_agent.run(state["raw_parsed"])
             try:
                 raw_xml = Path(state["source_file"]).read_text(encoding="utf-8", errors="ignore")
@@ -121,7 +121,7 @@ class PipelineOrchestrator:
         # 3. Classify node
         def classify_node(state: PipelineState) -> dict:
             t0 = time.time()
-            logger.info("[Step 3/8] Classifier Agent scoring complexity...")
+            logger.info("[Step 3/9] Classifier Agent scoring complexity...")
             classified = self.classifier_agent.run(state["normalized"])
             return {
                 "classified": classified,
@@ -133,9 +133,9 @@ class PipelineOrchestrator:
             should_continue, escalation_result = self.escalation.check(state["classified"])
             status = "in_progress" if should_continue else "escalated"
             if not should_continue:
-                logger.warning(f"[Step 4/8] ⛔ Job escalated for human review. Stopping automation.")
+                logger.warning(f"[Step 4/9] ⛔ Job escalated for human review. Stopping automation.")
             else:
-                logger.info(f"[Step 4/8] Escalation check: proceed with automation")
+                logger.info(f"[Step 4/9] Escalation check: proceed with automation")
             return {
                 "escalation": escalation_result,
                 "status": status,
@@ -145,7 +145,7 @@ class PipelineOrchestrator:
         # 5. Translate node
         def translate_node(state: PipelineState) -> dict:
             t0 = time.time()
-            logger.info(f"[Step 5/8] Translator Agent generating outputs...")
+            logger.info(f"[Step 5/9] Translator Agent generating outputs...")
             translated = self.translator_agent.run(state["classified"], self.output_formats)
             return {
                 "translated": translated,
@@ -155,7 +155,7 @@ class PipelineOrchestrator:
         # 6. Review node
         def review_node(state: PipelineState) -> dict:
             t0 = time.time()
-            logger.info("[Step 6/8] Reviewer Agent reviewing generated code...")
+            logger.info("[Step 6/9] Reviewer Agent reviewing generated code...")
             reviewed = self.reviewer_agent.run(state["translated"])
             return {
                 "reviewed": reviewed,
@@ -165,7 +165,7 @@ class PipelineOrchestrator:
         # 7. Tester node
         def tester_node(state: PipelineState) -> dict:
             t0 = time.time()
-            logger.info("[Step 7/8] Tester Agent generating test suite...")
+            logger.info("[Step 7/9] Tester Agent generating test suite...")
             tested = self.tester_agent.run(state["reviewed"])
             return {
                 "tested": tested,
@@ -175,7 +175,7 @@ class PipelineOrchestrator:
         # 8. Documentation node
         def doc_node(state: PipelineState) -> dict:
             t0 = time.time()
-            logger.info("[Step 7/8] Documentation Agent writing migration docs...")
+            logger.info("[Step 8/9] Documentation Agent writing migration docs...")
             documented = self.documentation_agent.run(state["tested"])
             if not state["dry_run"]:
                 self._save_outputs(documented, state["job_name"])
@@ -187,7 +187,7 @@ class PipelineOrchestrator:
         # 9. Validation node
         def validation_node(state: PipelineState) -> dict:
             t0 = time.time()
-            logger.info("[Step 8/8] Validator running checks...")
+            logger.info("[Step 9/9] Validator running checks...")
             output_files = self._list_output_files(state["job_name"], state["dry_run"])
             # v2.0: pass artifact file paths for QG-12 verification
             validation_result = self.validator.validate(state["documented"], artifact_files=output_files)
@@ -243,8 +243,19 @@ class PipelineOrchestrator:
         workflow.add_edge("documentation", "validation")
         workflow.add_edge("validation", END)
 
-        self.graph = workflow.compile()
-        logger.info("[Orchestrator] LangGraph StateGraph pipeline compiled successfully.")
+        # ── SQLite Checkpointing for error recovery ────────────────────────────
+        try:
+            from langgraph.checkpoint.sqlite import SqliteSaver
+            checkpoint_dir = self.output_dir / ".checkpoints"
+            checkpoint_dir.mkdir(parents=True, exist_ok=True)
+            self._checkpointer = SqliteSaver.from_conn_string(str(checkpoint_dir / "pipeline.db"))
+            self.graph = workflow.compile(checkpointer=self._checkpointer)
+            logger.info("[Orchestrator] LangGraph pipeline compiled with SQLite checkpointing.")
+        except ImportError:
+            logger.warning("[Orchestrator] aiosqlite not installed — compiling without checkpointing.")
+            self._checkpointer = None
+            self.graph = workflow.compile()
+            logger.info("[Orchestrator] LangGraph StateGraph pipeline compiled (no checkpointing).")
 
     # ─────────────────────── Public API ───────────────────────────────────────
 
@@ -315,6 +326,16 @@ class PipelineOrchestrator:
                 })
 
             result["elapsed_seconds"] = round(time.time() - start_time, 2)
+
+            # ── Upload cleanup: delete source file after successful processing ──
+            if result["status"] == "completed" and not dry_run:
+                try:
+                    source = Path(result["source_file"])
+                    if source.exists() and source.parent.name == "uploads":
+                        source.unlink()
+                        logger.info(f"[Orchestrator] Cleaned up processed upload: {source.name}")
+                except Exception as cleanup_err:
+                    logger.warning(f"[Orchestrator] Upload cleanup failed: {cleanup_err}")
 
             status_icon = "✅" if result["status"] == "completed" else "⚠️"
             logger.info(f"{status_icon} [{job_name}] Done in {result['elapsed_seconds']}s")

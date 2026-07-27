@@ -106,8 +106,8 @@ def run_server_mode(args) -> None:
     from src.layer3_agents.reviewer_agent import ReviewerAgent
     from src.layer3_agents.tester_agent import TesterAgent
     from src.layer3_agents.documentation_agent import DocumentationAgent
-    from src.layer5_validation.validator_agent import ValidatorAgent
-    from src.layer6_human_review.escalation import EscalationHandler
+    from src.layer4_validation.validator_agent import ValidatorAgent
+    from src.layer5_human_review.escalation import EscalationHandler
     from langgraph.graph import StateGraph, END
 
     dsx_file   = Path(args.input)
@@ -530,8 +530,17 @@ def run_server_mode(args) -> None:
     workflow.add_edge("validate", "report")
     workflow.add_edge("report", END)
 
-    # Compile the graph
-    graph = workflow.compile()
+    # Compile the graph with SQLite checkpointing
+    try:
+        from langgraph.checkpoint.sqlite import SqliteSaver
+        checkpoint_dir = Path(PROJECT_ROOT) / "output" / ".checkpoints"
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        checkpointer = SqliteSaver.from_conn_string(str(checkpoint_dir / "server_pipeline.db"))
+        graph = workflow.compile(checkpointer=checkpointer)
+        logger.info("[Server] LangGraph compiled with SQLite checkpointing.")
+    except ImportError:
+        logger.warning("[Server] aiosqlite not installed — compiling without checkpointing.")
+        graph = workflow.compile()
 
     # Instantiate agents
     p_agent, c_agent, t_agent, r_agent, te_agent, d_agent, esc_agent, val_agent = make_agents()
@@ -567,6 +576,13 @@ def run_server_mode(args) -> None:
 
     try:
         graph.invoke(initial_state)
+        # Upload cleanup: delete source file after successful processing
+        try:
+            if dsx_file.exists() and dsx_file.parent.name == "uploads":
+                dsx_file.unlink()
+                logger.info(f"[Server] Cleaned up processed upload: {dsx_file.name}")
+        except Exception as cleanup_err:
+            logger.warning(f"[Server] Upload cleanup failed: {cleanup_err}")
     except Exception as exc:
         logger.error(f"Pipeline error: {exc}", exc_info=True)
         emit("failed", {"error": str(exc)})

@@ -33,6 +33,7 @@ class ReasoningEngine:
         self.scorer = ConfidenceScorer(config)
         # Merge all pattern groups for expression translation
         self._patterns: dict[str, dict[str, str]] = {}
+        self.translation_warnings: list[dict] = []  # Track failed pattern translations
         for group in [STRING_PATTERNS, DATE_PATTERNS, MATH_PATTERNS, NULL_CONDITIONAL_PATTERNS]:
             for target, mapping in group.items():
                 if target not in self._patterns:
@@ -71,8 +72,18 @@ class ReasoningEngine:
         for pattern, replacement in patterns.items():
             try:
                 expr = re.sub(pattern, replacement, expr)
-            except re.error:
-                pass  # skip malformed patterns
+            except re.error as e:
+                logger.warning(
+                    f"[ReasoningEngine] Regex pattern failed: '{pattern}' → '{replacement}' | "
+                    f"Error: {e} | Expression: '{expression[:80]}'"
+                )
+                self.translation_warnings.append({
+                    "type": "regex_failure",
+                    "pattern": pattern,
+                    "replacement": replacement,
+                    "expression": expression[:120],
+                    "error": str(e),
+                })
 
         # 3. DS string concatenation operator (:) → || or concat
         if ":" in expr and not expr.startswith("jdbc"):
