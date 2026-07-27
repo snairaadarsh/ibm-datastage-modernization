@@ -723,4 +723,4 @@ Internal / Proprietary
 
 ---
 
-*Built with LangGraph, Google Gemini, React, and Node.js.*
+*Built with LangGraph, React, Node.js and Claude.*
