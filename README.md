@@ -110,7 +110,6 @@ The system follows a **5-layer architecture** with a **9-step LangGraph pipeline
 graph TB
     subgraph "User Interface"
         UI["🖥️ React Web Dashboard"]
-        CLI["⌨️ Command Line (CLI)"]
     end
 
     subgraph "Layer 1: Ingestion"
@@ -144,7 +143,6 @@ graph TB
     end
 
     UI --> FW
-    CLI --> XP
     FW --> XP
     XP --> PA
     PA --> RE
@@ -592,58 +590,122 @@ IBM_DataStage_Modernization/
 ## Getting Started
 
 ### Prerequisites
-- **Python 3.10+**
-- **Node.js 18+** (for the web UI)
-- An API key for at least one LLM provider (Gemini, OpenAI, or Anthropic)
 
-### 1. Install Python Dependencies
+- **Python 3.10+** — [Download](https://www.python.org/downloads/)
+- **Node.js 18+** — [Download](https://nodejs.org/) (only needed for the Web UI)
+- **Git** — [Download](https://git-scm.com/)
+- An API key from at least one LLM provider:
+  - [Google Gemini](https://aistudio.google.com/app/apikey) *(recommended)*
+  - [OpenAI](https://platform.openai.com/api-keys)
+  - [Anthropic](https://console.anthropic.com/)
+
+---
+
+### Step 1 — Clone the Repository
 
 ```bash
+git clone https://github.com/your-org/IBM_DataStage_Modernization.git
 cd IBM_DataStage_Modernization
+```
+
+> **Note:** Replace the URL above with your actual repository URL.
+
+---
+
+### Step 2 — Create a Virtual Environment
+
+Using a virtual environment keeps your project dependencies isolated from your global Python installation.
+
+**macOS / Linux:**
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+**Windows (Command Prompt):**
+```cmd
+python -m venv .venv
+.venv\Scripts\activate.bat
+```
+
+**Windows (PowerShell):**
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+Once activated, your terminal prompt will be prefixed with `(.venv)`.
+
+---
+
+### Step 3 — Install Dependencies
+
+With your virtual environment active, install all required Python packages:
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configure Your API Key
+This installs the following key dependencies:
 
-Edit the `.env` file:
+| Category | Packages |
+|----------|----------|
+| **LLM Providers** | `google-generativeai`, `openai`, `anthropic` |
+| **AI Orchestration** | `langgraph`, `langchain-core`, `langchain-community` |
+| **Data Processing** | `pandas`, `lxml`, `xmltodict` |
+| **Display** | `rich`, `colorama` |
+| **Testing** | `pytest`, `pytest-cov` |
+| **Utilities** | `python-dotenv`, `watchdog`, `aiosqlite` |
+
+Then configure your API key by editing the `.env` file in the project root:
+
 ```env
+# Required: set at least one of these
 GEMINI_API_KEY=your-gemini-api-key-here
-# Or use OpenAI/Anthropic:
-# OPENAI_API_KEY=your-key-here
-# ANTHROPIC_API_KEY=your-key-here
+
+# Optional alternatives
+# OPENAI_API_KEY=your-openai-key-here
+# ANTHROPIC_API_KEY=your-anthropic-key-here
 ```
 
-### 3. Run via CLI (Simplest)
+> **Tip:** Gemini is the recommended default — it has a large context window (1M tokens) and is cost-effective.
 
+---
+
+### Step 4 — Run via Web UI
+
+The web dashboard provides a visual, interactive interface for uploading files, monitoring pipeline progress in real time, and reviewing flagged jobs.
+
+It requires **two separate terminals** running simultaneously.
+
+**Terminal 1 — Start the Node.js backend server:**
 ```bash
-# Process a single file
-python main.py --input samples/customer_sales_etl.dsx
-
-# Process all files in a directory
-python main.py --input samples/
-
-# Dry run (analyze without writing output files)
-python main.py --input samples/customer_sales_etl.dsx --dry-run
-
-# Watch mode (monitor a folder for new files)
-python main.py --watch
-```
-
-### 4. Run via Web UI
-
-```bash
-# Terminal 1: Start the Node.js server
 cd ui
 npm install
 npm start
+```
+The API server starts on `http://localhost:3001`.
 
-# Terminal 2: Start the React frontend
+**Terminal 2 — Start the React frontend:**
+```bash
 cd ui/client
 npm install
 npm run dev
 ```
+The UI starts on `http://localhost:5173`.
 
-Then open `http://localhost:5173` in your browser.
+**Open your browser and navigate to:**
+```
+http://localhost:5173
+```
+
+#### UI Workflow
+
+1. **Upload** — Drag and drop your `.dsx` file and select your LLM provider + model
+2. **Pipeline View** — Watch all 9 pipeline steps execute in real time
+3. **Human Review** *(if needed)* — Approve, comment on, or reject AI decisions for complex jobs
+4. **Validation Review** — Inspect all 12 quality gate results (QG-01 through QG-12)
+5. **Results** — View and download all 8 generated output artifacts
 
 ---
 
@@ -684,17 +746,6 @@ python -m pytest tests/ --cov=src --cov-report=term-missing
 | `LLM_API_KEY` | Fallback key (any provider) | Optional |
 | `PORT` | Node.js server port | `3001` |
 
-### CLI Flags
-
-| Flag | Description |
-|------|-------------|
-| `--input PATH` | Path to a `.dsx` file or directory |
-| `--dry-run` | Analyze without writing output files |
-| `--watch` | Monitor `./input/` folder for new files |
-| `--report` | Display current migration report |
-| `--formats pyspark datafusion` | Choose output formats |
-| `--automate-complex` | Skip human review for complex jobs (use with caution) |
-| `--verbose` | Enable debug logging |
 
 ---
 
